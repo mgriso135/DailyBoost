@@ -1,0 +1,13 @@
+{
+    "name": "vendor/time-tracking",
+    "description": "Description of project TimeTracking.",
+    "authors": [
+        {
+            "name": "mgris",
+            "email": "your@email.here"
+        }
+    ],
+    "require": {
+        "athari/yalinqo": "dev-master"
+    }
+}
