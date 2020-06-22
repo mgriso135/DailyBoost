@@ -98,12 +98,16 @@
   loadCategoriesPanel();
 
         $(function () {
-            var currDate = new Date();
+            /*var currDate = new Date();
+            var tomorrow = currDate.getDate() + 1;*/
+        var currDate = moment().add(1,'days').format('YYYY-MM-DD 08:00:00');
+        var tomorrow = moment().add(1,'days').format('YYYY-MM-DD 19:00:00');
+        var minDate = moment().format('YYYY-MM-DD HH:mm:ss');
             $('#datetimepicker1').datetimepicker({
                 locale: '<?= $lang ?>',
                 format: 'YYYY-MM-DD HH:mm:ss',
                 useCurrent: true,
-                minDate: currDate,
+                minDate: minDate,
                 defaultDate: currDate,
                 calendarWeeks: true,
                 showTodayButton: true,
@@ -113,8 +117,8 @@
                 locale: '<?= $lang ?>',
                 format: 'YYYY-MM-DD HH:mm:ss',
                 useCurrent: true,
-                minDate: currDate,
-                defaultDate: currDate.setDate(currDate.getDate() +1),
+                minDate: minDate,
+                defaultDate: tomorrow,
                 calendarWeeks: true,
                 showTodayButton: true,
                 showClose: true,
@@ -305,12 +309,28 @@
                                       strstatus = "<?= TASKLIST_STATUS_F ?>";
                                       break;
                                 }
+                                
+                                strStart = "";
+                                strEnd = "";
+                                
+                                var dt = new Date(2000,1,1);                                
+                                if(new Date(res[i].earlystart.date) > dt)
+                                {
+                                    strStart = moment(res[i].earlystart.date).format('DD/MM/YYYY HH:mm:ss');
+                                }
+                                
+                                if(new Date(res[i].latefinish.date) > dt)
+                                {
+                                    strEnd = moment(res[i].latefinish.date).format('DD/MM/YYYY HH:mm:ss');
+                                }
+                                    
+                                
                           strTable += "<tr>"
                           +"<td>"+res[i].category_name+"</td>"
                                   +"<td>" + res[i].name + "</td>"
                                 +"<td>"+strstatus+"</td>"
-                                    +"<td>"+ moment(res[i].earlystart.date).format('DD/MM/YYYY HH:mm:ss') + "</td>"
-                                    +"<td>" + moment(res[i].latefinish.date).format('DD/MM/YYYY HH:mm:ss') + "</td>"
+                                    +"<td>"+ strStart + "</td>"
+                                    +"<td>" + strEnd + "</td>"
                                     +"<td>" + res[i].neverending + "</td>"
                                   +"</tr>";
                       }

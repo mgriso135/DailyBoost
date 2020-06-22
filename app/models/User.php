@@ -740,7 +740,7 @@ class User
                     . " INNER JOIN categories ON (categoriestasks.categoryid = categories.id)"
                     . " INNER JOIN categoriesusers ON (categoriesusers.idcategory = categoriestasks.categoryid) "
                     ." WHERE tasks.status <> 'F' "
-                    . " AND categoriesusers.iduser=?";
+                    . " AND categoriesusers.iduser=? ";
             
             if(sizeof($categories_filter) > 0)
             {
@@ -755,7 +755,7 @@ class User
                 $sql .= "categories.id = " . $categories_filter[sizeof($categories_filter) - 1] 
                         . ")";
             }
-            $sql.= " ORDER BY neverending DESC, latefinish ASC, earlystart ASC";
+            $sql.= " ORDER BY neverending ASC, latefinish ASC, earlystart ASC";
             
             if($stmt = $link->prepare($sql))
             {
