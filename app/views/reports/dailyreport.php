@@ -42,8 +42,8 @@
                },
                warning: function (result) {
                    $("#imgloadcategories").fadeOut();
-                                  alert("Warning");
-                              }
+                   alert("Warning");
+                }
       });
     }
   
@@ -180,7 +180,6 @@
             if(startd <= endd)
             {
                  $.ajax({ 
-               // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
                url: "/dailyboost/public/ReportsController/getUserDailyReportGroupedByTaskId",
                type: 'POST',
                dataType: "html",
@@ -190,37 +189,15 @@
                    end: endd.getFullYear() + "-" + (endd.getMonth()+1) + "-" + endd.getDate(),
                },
                success: function (result) {
-        console.log(result);
-        console.log(JSON.parse(result).tasks);
+
         var res = JSON.parse(result).tasks;
         tsResume = res;
         var cats = JSON.parse(result).categories;
         catsResume = cats;
-        
-        
-                  var strtable = "<table class='table table-hover table-striped'><thead><tr>"
-                    +"<th><?= _TIMESPAN_CATEGORYNAME ?></th>"
-                      +"<th><?= _TIMESPAN_TASKID ?></th>"
-                      +"<th><?= _TIMESPAN_TASKNAME ?></th>"
-                      +"<th><?= _TIMESPAN_DURATION ?></th>"
-                      +"</tr></thead><tbody>";
-
-                  for(var i = 0; i < res.length; i++)
-                  {
-                      strtable += "<tr>"
-                      +"<td>"+res[i].category_name+"</td>"
-                            +"<td>"+res[i].taskid+"</td>"
-                            +"<td>"+res[i].taskname + "</td>"
-                            +"<td>"+Math.round(res[i].totalDuration*100)/100+"</td>"
-            +"</tr>"
-                  }
-                  strtable += "</tbody></table>";
-                  console.log(strtable);
-                  $("#divTableGroupByTaskId").html(strtable);
-                  loadTaskCheckboxes();
+        loadTaskCheckboxes();
                   loadCategoriesCheckboxes();
-                  drawCharts();
-                  drawCategoriesChart();
+            drawTable(res);
+                  
                },
                error: function (result) {
                                   alert("Error");
@@ -236,14 +213,41 @@
             }
         }
         
+        function drawTable(tasks)
+        {
+            var strtable = "<table class='table table-hover table-striped'><thead><tr>"
+                    +"<th><?= _TIMESPAN_CATEGORYNAME ?></th>"
+                      +"<th><?= _TIMESPAN_TASKID ?></th>"
+                      +"<th><?= _TIMESPAN_TASKNAME ?></th>"
+                      +"<th><?= _TIMESPAN_DURATION ?></th>"
+                      +"</tr></thead><tbody>";
+
+                  for(var i = 0; i < tasks.length; i++)
+                  {
+                      if($("#category_" + tasks[i].category_id).prop("checked") && $("#task_" + tasks[i].taskid).prop("checked"))
+                      {
+                      strtable += "<tr>"
+                      +"<td>"+tasks[i].category_name+"</td>"
+                            +"<td>"+tasks[i].taskid+"</td>"
+                            +"<td>"+tasks[i].taskname + "</td>"
+                            +"<td>"+Math.round(tasks[i].totalDuration*100)/100+"</td>"
+            +"</tr>"
+    }
+                  }
+                  strtable += "</tbody></table>";
+                  $("#divTableGroupByTaskId").html(strtable);
+
+                  drawCharts();
+        }
+        
         function loadTaskCheckboxes()
         {
             // divCheckboxesGroupByTaskId
             var strchks = "";
             for(var i = 0; i < tsResume.length; i++)
             {
-                strchks +="<input type='checkbox' id='task_" + tsResume[i].taskid + "' class='chkTaskGraph' name='chkTaskGraph' checked />"
-             + tsResume[i].taskname + "&nbsp;";
+                strchks +="<span id='containertask_"+ tsResume[i].taskid + "' class='inline-block'><input type='checkbox' id='task_" + tsResume[i].taskid + "' class='chkTaskGraph' name='chkTaskGraph' checked />"
+             + tsResume[i].taskname + "&nbsp;</span>";
             }
             $("#divCheckboxesGroupByTaskId").html(strchks);
         }
@@ -265,9 +269,16 @@
         hours.push(['Task Name', 'Duration']);
         for(var i = 0; i < tsResume.length; i++)
         {
-            if($("#task_" + tsResume[i].taskid).prop("checked"))
+            /*var activeCat = $.inArray(tsResume[i].category_id,catsResume);
+            var activeCat = catsResume.findIndex(x => x.category_id === tsResume[i].category_id);
+            console.log(activeCat + " " + tsResume[i].category_id + " cats: " + JSON.stringify(catsResume));*/
+
+            if($("#category_" + tsResume[i].category_id).prop("checked") && $("#task_" + tsResume[i].taskid).prop("checked"))
             {
                 hours.push([tsResume[i].taskname, tsResume[i].totalDuration]);
+            }
+            else
+            {
             }
         }       
        data = google.visualization.arrayToDataTable(hours);
@@ -309,11 +320,25 @@
       }
       
       $("#divCheckboxesGroupByTaskId").on("click", ".chkTaskGraph", function(){
-          drawTasksChart();
+          drawTable(tsResume);
       });
       
       $("#divCheckboxesGroupByCategory").on("click", ".chkCategoriesGraph", function(){
-          drawCategoriesChart();
+          drawTable(tsResume);
+  
+              for(var i = 0; i < tsResume.length; i++)
+              {
+                if($("#category_" + tsResume[i].category_id).prop("checked"))
+                {
+                    $("#task_" + tsResume[i].taskid).fadeIn();
+                    $("#containertask_"+ tsResume[i].taskid).fadeIn();
+                }
+                else
+                {
+                    $("#task_" + tsResume[i].taskid).fadeOut();
+                    $("#containertask_"+ tsResume[i].taskid).fadeOut();
+                }
+          }
       });
     
     var today = new Date();
@@ -420,18 +445,26 @@
                         </div>
                     </div>
                     <p></p>
+                    <div class="row">
+                        <div class="col-sm">
+                            <div id="divCheckboxesGroupByCategory">Category text</div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-sm">
+                            <div id="divCheckboxesGroupByTaskId"></div>
+                        </div>
+                    </div>
                     <div class="col-lg-12">
                     <div id="divTableGroupByTaskId"></div>
                     </div>
                     <div class="row">
-                        <div class="col-sm">
-                    <div id="divCheckboxesGroupByTaskId"></div>
-                    
+                        <div class="col-sm">                    
                         <div id="piechart" style="width: 900px; height: 500px;"></div>
                         </div>
                         <div class="col-sm">
                         
-                            <div id="divCheckboxesGroupByCategory">Category text</div>
+                            
                     
                         <div id="piechart_categories" style="width: 900px; height: 500px;"></div>
                         </div>

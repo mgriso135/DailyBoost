@@ -76,6 +76,7 @@ class ReportsController extends Controller {
                         return [
                             'taskid' => from($timespans)->first()->taskid,
                             'taskname' => from($timespans)->first()->task_name,
+                            'category_id' =>from($timespans)->first()->category_id,
                             'category_name' => from($timespans)->first()->category_name,
                             'totalDuration' => Enumerable::from($timespans)->sum(
                                 function($p) { return $p->duration; }
