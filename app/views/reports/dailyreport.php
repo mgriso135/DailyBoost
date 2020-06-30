@@ -215,6 +215,9 @@
         
         function drawTable(tasks)
         {
+            var totalduration = 0.0;
+            if(tasks.length > 0)
+            {
             var strtable = "<table class='table table-hover table-striped'><thead><tr>"
                     +"<th><?= _TIMESPAN_CATEGORYNAME ?></th>"
                       +"<th><?= _TIMESPAN_TASKID ?></th>"
@@ -231,11 +234,20 @@
                             +"<td>"+tasks[i].taskid+"</td>"
                             +"<td>"+tasks[i].taskname + "</td>"
                             +"<td>"+Math.round(tasks[i].totalDuration*100)/100+"</td>"
-            +"</tr>"
+            +"</tr>";
+    totalduration += Math.round(tasks[i].totalDuration*100)/100;
     }
                   }
-                  strtable += "</tbody></table>";
+                  strtable += "</tbody>"
+                      +"<tfoot><td><b><?= _TOTAL ?></b></td><td></td><td></td><td><b>"+Math.round(totalduration*100)/100+"</b></td></tfoot>"
+    +"</table>";
+    
                   $("#divTableGroupByTaskId").html(strtable);
+              }
+              else
+              {
+                  $("#divTableGroupByTaskId").html("");
+              }
 
                   drawCharts();
         }

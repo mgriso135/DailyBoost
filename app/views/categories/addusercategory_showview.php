@@ -5,7 +5,6 @@
 <script>
     $(document).ready(function(){
        $('#addusercategory_showview_modal').modal('show');
-       
        $("#btnAddCategory").click(function(){
            var catname = $("#categoryname").val();
            if(catname.length > 0)

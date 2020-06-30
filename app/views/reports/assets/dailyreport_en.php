@@ -16,3 +16,4 @@ define("_TIMESPAN_ENDDATE", "End date");
 define("_TIMESPAN_DURATION", "Duration");
 define("_TIMESPAN_CATEGORYNAME", "Category");
 define("_PLANNINGBOARD", "Planning Board");
+define("_TOTAL", "Total");

@@ -44,3 +44,5 @@ define("TASKLIST_STATUS_E", "In execution");
 define("TASKLIST_STATUS_N", "Planned");
 define("TASKLIST_STATUS_P", "Pause");
 define("TASKLIST_STATUS_F", "Ended");
+define("_MODAL_EDITTASK_TITLE", "Edit task");
+?>

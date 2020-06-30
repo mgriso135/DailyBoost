@@ -31,6 +31,8 @@
   <script>
   $(document).ready(function(){
       
+      var defaultDuration = 1.0;
+      
       var userId = <?= $_SESSION['userid'] ?>;
       
       var categories = [];
@@ -100,8 +102,8 @@
         $(function () {
             /*var currDate = new Date();
             var tomorrow = currDate.getDate() + 1;*/
-        var currDate = moment().add(1,'days').format('YYYY-MM-DD 08:00:00');
-        var tomorrow = moment().add(1,'days').format('YYYY-MM-DD 19:00:00');
+        var currDate = moment().add(1,'days').format('YYYY-MM-DD 18:00:00');
+        var tomorrow = moment(currDate).add(defaultDuration, 'hours').format('YYYY-MM-DD 19:00:00');
         var minDate = moment().format('YYYY-MM-DD HH:mm:ss');
             $('#datetimepicker1').datetimepicker({
                 locale: '<?= $lang ?>',
@@ -112,7 +114,15 @@
                 calendarWeeks: true,
                 showTodayButton: true,
                 showClose: true,
+            })
+            .on('dp.change', function(ev) {
+               // var currDate = new Date(moment($("#startdate").val()).format());
+                //var newdate = moment($("#startdate").val()).add(defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss');
+               // $("#taskid").addClass("is-valid");
+                $("#enddate").val(moment($("#startdate").val()).add(defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss'));
+               // $("#taskid").removeClass("is-valid");
             });
+            
             $('#datetimepicker2').datetimepicker({
                 locale: '<?= $lang ?>',
                 format: 'YYYY-MM-DD HH:mm:ss',
@@ -122,8 +132,21 @@
                 calendarWeeks: true,
                 showTodayButton: true,
                 showClose: true,
+            })
+            .on('dp.change', function(ev){
+                var startd = new Date(moment($("#startdate").val()).format());
+                var endd = new Date(moment($("#enddate").val()).format());
+                if(startd < endd)
+                {
+                    defaultDuration = (endd - startd) / (60 * 60 * 1000);
+                }
+                else
+                {
+                    $("#startdate").val(moment($("#enddate").val()).add(-defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss'));
+                }
             });
         });
+        
         
         $("#btnSaveTask").click(function(){
         
@@ -221,7 +244,7 @@
                         end_date: moment(end).format('YYYY-MM-DD HH:mm:ss'),
                     },
                     success: function (result) {
-                        console.log(result);
+                        //console.log(result);
                         if(result.length > 0)
                         {
                             $("#taskid").val('');
@@ -235,6 +258,7 @@
                             $("#startdate").removeClass("is-valid");
                             $("#enddate").removeClass("is-valid");
                             loadTasksPlanned();
+                            defaultDuration=1;
                         }
                         else
                         {
@@ -283,6 +307,7 @@
                           {
                       var strTable = "<table class='table table-striped table-hover table-borderless' id='tblTasksInExecution'>"
                               +"<thead><tr>"
+                      +"<th></th>"
                               +"<th><?= TASKLIST_CATEGORYNAME ?></th>"
                                 +"<th><?= TASKLIST_TASKNAME ?></th>"
                                 +"<th><?= TASKLIST_STATUS ?></th>"
@@ -325,14 +350,17 @@
                                 }
                                     
                                 
-                          strTable += "<tr>"
-                          +"<td>"+res[i].category_name+"</td>"
-                                  +"<td>" + res[i].name + "</td>"
+                          strTable += "<input type='hidden' id='categoryid_" + res[i].id + "' value='" + res[i].category_id + "' />"
+                                  +"<tr id='task_"+res[i].id+"'>"
+                          +"<td><span class='edit_task icon-event' style='width:10%; height:10%;color:grey;cursor:pointer;' data-inline='false' id='edittask_"+res[i].id+"'></span></td>"
+                          +"<td><span id='categoryname_" + res[i].id + "'>" + res[i].category_name + "</span></td>"
+                                  +"<td><span id='taskname_"+res[i].id+"'>" + res[i].name + "</span></td>"
                                 +"<td>"+strstatus+"</td>"
-                                    +"<td>"+ strStart + "</td>"
-                                    +"<td>" + strEnd + "</td>"
+                                    +"<td><span id='taskstartdate_" + res[i].id + "'>"+ strStart + "</span></td>"
+                                    +"<td><span id='taskenddate_" + res[i].id + "'>" + strEnd + "</span></td>"
                                     +"<td>" + res[i].neverending + "</td>"
                                   +"</tr>";
+                          //console.log(strTable);
                       }
                       strTable+="</tbody></table>";
                       
@@ -375,6 +403,65 @@
             loadTasksPlanned();
         });
         
+        $('#datetimepicker1_modal').datetimepicker({
+                locale: '<?= $lang ?>',
+                format: 'YYYY-MM-DD HH:mm:ss',
+                useCurrent: true,
+                //minDate: minDate,
+                //defaultDate: currDate,
+                calendarWeeks: true,
+                showTodayButton: true,
+                showClose: true,
+            })
+            .on('dp.change', function(ev) {
+               // var currDate = new Date(moment($("#startdate").val()).format());
+                //var newdate = moment($("#startdate").val()).add(defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss');
+               // $("#taskid").addClass("is-valid");
+                $("#enddate").val(moment($("#startdate").val()).add(defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss'));
+               // $("#taskid").removeClass("is-valid");
+            });
+            
+            $('#datetimepicker2_modal').datetimepicker({
+                locale: '<?= $lang ?>',
+                format: 'YYYY-MM-DD HH:mm:ss',
+                useCurrent: true,
+                //minDate: minDate,
+                //defaultDate: tomorrow,
+                calendarWeeks: true,
+                showTodayButton: true,
+                showClose: true,
+            })
+            .on('dp.change', function(ev){
+                var startd = new Date(moment($("#startdate").val()).format());
+                var endd = new Date(moment($("#enddate").val()).format());
+                if(startd < endd)
+                {
+                    defaultDuration = (endd - startd) / (60 * 60 * 1000);
+                }
+                else
+                {
+                    $("#startdate").val(moment($("#enddate").val()).add(-defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss'));
+                }
+            });
+        
+        $("#dvLstPlannedTasks").on("click", ".edit_task",function(){
+            console.log("edit " + $(this).prop("id"));
+            var ataskid=$(this).prop("id").split('_');
+            if(ataskid.length == 2)
+            {
+                var taskid = ataskid[1];
+                var startdate = moment($("#taskstartdate_" + taskid).html(), "DD/MM/YYYY HH:mm:ss");
+                var enddate = moment($("#taskenddate_" + taskid).html(), "DD/MM/YYYY HH:mm:ss");
+                console.log(taskid + " - "+ $("#taskstartdate_" + taskid).html() + " - " + $("#taskenddate_" + taskid).html() 
+                        + " " + startdate);
+                
+                $("#edittask_modal_taskname").val($("#taskname_" + taskid).html());
+                $("#edittask_modal_categoryname").val($("#categoryname_" + taskid).html());
+                $("#edittask_modal_startdate").val(moment(startdate).format('DD/MM/YYYY HH:mm:ss'));
+                $("#edittask_modal_enddate").val(moment(enddate).format('DD/MM/YYYY HH:mm:ss'));
+                $("#edittask_modal").modal('show');
+            }
+        });
         
         $("#imgloadtasksinexecution").fadeOut();
         loadTasksPlanned();
@@ -566,4 +653,61 @@
       </div>
     </div>
   </div>
+</div>
+        
+        
+<div class="modal" tabindex="-1" role="dialog" id="edittask_modal">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 class="modal-title" id="edittask_modal_title"><?= _MODAL_EDITTASK_TITLE ?></h4>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body" id="edittask_modal_body">
+        <div class="input-group-lg input-daterange align-items-center form-inline">
+            <div class="form-inline align-middle">
+                            <datalist id="categorieslist">
+                                <?php
+                                if(isset($data['categories_list']))
+                                {
+                                    $cats = $data['categories_list'];
+                                    for($i=0; $i < sizeof($cats); $i++)
+                                    { ?>
+                                      <option data-id="<?= $cats[$i]->id ?>" value="<?= $cats[$i]->name ?>"></option>
+                                    <?php 
+                                    }
+                                }
+                                ?>
+                            </datalist>
+                            <div class="input-group-lg mb-3">
+                                <input id="edittask_modal_taskname" list="opentasks_list" placeholder="<?= _PLACEHOLDER_STARTTASK ?>" class="form-control" maxlength="254" />&nbsp;</div>
+                                <div class="input-group-lg mb-3">
+                                      <input id="edittask_modal_categoryname" list="categorieslist" placeholder="<?= _PLACEHOLDER_SELECTCATEGORY ?>" class="form-control" maxlength="254" value="" />
+                                </div>
+                            </div>
+                            <p></p>
+                                <div class='input-group date' id='datetimepicker1_modal'>
+                                    <input type='text' class="form-control" id="edittask_modal_startdate"  />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>&nbsp;
+                                <span><?= _PLANNINGBOARD_TO_DATE ?></span>&nbsp;
+                                <div class='input-group date' id='datetimepicker2_modal'>
+                                    <input type='text' class="form-control" id="edittask_modal_enddate" />
+                                    <span class="input-group-addon">
+                                        <span class="glyphicon glyphicon-calendar"></span>
+                                    </span>
+                                </div>
+                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+                                <div class="input-group"  />
+                            </div>
+      </div>
+      <div class="modal-footer">
+      </div>
+    </div>
+  </div>
+</div>
 </div>
