@@ -25,6 +25,7 @@ class Category {
     
     public function __construct($category_id=-1)
     {
+        $this->id=-1;   
         $this->tasks = array();
         $this->users = array();
         $this->accounts = array();

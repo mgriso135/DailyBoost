@@ -36,6 +36,7 @@ define("_INPUT_VALIDATION_ERROR_NEVERENDING", "Invalid never ending flag");
 define("_PLANNEDTASKS_LIST_TITLE", "Planned tasks");
 define("TASKLIST_CATEGORYNAME", "Category name");
 define("TASKLIST_TASKNAME", "Task name");
+define("_TASKLIST_TASKDESCRIPTION", "Descripción");
 define("TASKLIST_EARLYSTART", "Planned start");
 define("TASKLIST_LATESTART", "Due date");
 define("TASKLIST_NEVERENDING", "Never ending");
@@ -45,4 +46,5 @@ define("TASKLIST_STATUS_N", "Planned");
 define("TASKLIST_STATUS_P", "Pause");
 define("TASKLIST_STATUS_F", "Ended");
 define("_MODAL_EDITTASK_TITLE", "Edit task");
+define("_MODAL_EDITTASK_DESCRIPTION_PLACEHOLDER", "Descripción");
 ?>

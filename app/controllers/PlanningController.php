@@ -126,4 +126,103 @@ class PlanningController extends Controller {
             }
         }
     }
+    
+    /* Returns:
+     * 0 if generic error
+     * Task json if everything ok
+     * 2 if user not authorized
+     * 3 if category not found
+     * 4 if task not found
+     * 5 if user does not belong to the category of the task to be changed
+     */
+    public function editTask()
+    {
+        $ret = 0;
+        if($_SESSION["isLoggedIn"] && strlen($_SESSION['userid'])>0)
+        {
+            $category_id = $_POST['category_id'];
+            $taskid = $_POST['taskid'];
+            $taskname = $_POST['taskname'];
+            $taskdescription = $_POST['taskdescription'];
+            $neverending = $_POST['neverending'];
+            $start_date = $_POST['start_date'];
+            $end_date = $_POST['end_date'];
+            
+            $this->model('Task');
+            $tsk = new Task($taskid);
+            $this->model('Category');
+            $cat = new Category($category_id);
+            
+            if($cat->id !=-1)
+            {
+                if($tsk->id != -1)
+                {
+                    $tsk->loadOwners();
+                    $found = 0;
+                    for($i = 0; $i < sizeof($tsk->owners) && $found == 0; $i++)
+                    {
+                        if($tsk->owners[$i] == $_SESSION['userid'])
+                        {
+                            $found = 1;
+                        }
+                    }
+                    if($found == 1)
+                    {
+                        $tsk->setName($taskname);
+                        $tsk->setDescription($taskdescription);
+                        
+                        $this->model('User');
+                        $usr = new User($_SESSION['userid']);
+                        $usr->loadConfiguration();
+                        $tsk->setPlanningDates($start_date, $end_date, $usr->timezone);
+                        
+                        
+                        $neverending1="0";
+                        if($neverending=="true")
+                        {
+                            $neverending1 = "1";
+                        }
+                        
+                        if($tsk->neverending != $neverending1)
+                        {
+                            $tsk->setNeverEnding($neverending);
+                        }
+                        $tsk->loadCategories();
+                        $changecat = 0;
+                        for($i = 0; $i < $tsk->categories && $changecat; $i++)
+                        {
+                            if($category_id == $tsk->categories[$i]->id)
+                            {
+                                $changecat = 1;
+                            }
+                        }
+                        if($changecat == 0)
+                        {
+                            $tsk->changeCategory($category_id);
+                        }
+                        $tsk = new Task($taskid);
+                        $ret = json_encode($tsk);
+                    }
+                    else
+                    {
+                        $ret =5;
+                    }
+                }
+                else
+                {
+                    $ret = 4;
+                }
+            }
+            else
+            {
+                $ret = 3;
+            }
+        }
+        else
+        {
+            $ret = 2;
+        }
+        
+        echo $ret;
+    }
 }

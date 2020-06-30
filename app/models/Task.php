@@ -41,6 +41,7 @@ class Task {
     
     public $users_id; // Users that worked or are working in the task
     public $activeusers_ids;
+    public $owners; // Users that belongs from the categories of this task
     
     public $events;
     
@@ -877,4 +878,208 @@ class Task {
         }
     }
     
+    public function loadOwners()
+    {
+        $this->owners = array();
+        if($this->id != -1)
+        {
+        // Write the lead time in the database
+            // 
+            // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                  die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+
+            $sql = "SELECT tasks.id, categoriestasks.categoryid, categoriesusers.iduser AS userid "
+                    ."FROM tasks INNER JOIN categoriestasks ON (tasks.id = categoriestasks.taskid) "
+                    ."INNER JOIN categoriesusers ON (categoriesusers.idcategory = categoriestasks.categoryid) "
+                    ." WHERE tasks.id=?";
+           if($stmt = $link->prepare($sql))
+           {
+                $stmt->bind_param("i", $this->id);
+                $stmt->execute();
+                $result = $stmt->get_result();
+                while($row = $result->fetch_assoc()) {
+                     array_push($this->owners, $row['userid']);
+                }
+                $stmt->close();
+            }
+            else
+            {
+                
+            }
+            mysqli_close($link);
+        }
+    }
+    
+    public function setName($name)
+    {
+        if($this->id != -1)
+        {
+        // Write the lead time in the database
+            // 
+            // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                  die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+
+            $sql = "UPDATE tasks SET name = ? WHERE id = ?";
+           if($stmt = $link->prepare($sql))
+           {
+                $stmt->bind_param("si", $name, $this->id);
+                $stmt->execute();
+                $stmt->close();
+            }
+            else
+            {
+                
+            }
+            mysqli_close($link);
+        }
+    }
+    
+    public function setDescription($description)
+    {
+        if($this->id != -1)
+        {
+        // Write the lead time in the database
+            // 
+            // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                  die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+
+            $sql = "UPDATE tasks SET description = ? WHERE id = ?";
+           if($stmt = $link->prepare($sql))
+           {
+                $stmt->bind_param("si", $description, $this->id);
+                $stmt->execute();
+                $stmt->close();
+            }
+            else
+            {
+                
+            }
+            mysqli_close($link);
+        }
+    }
+    
+    public function setNeverEnding($neverending)
+    {
+        if($this->id != -1)
+        {
+        // Write the lead time in the database
+            // 
+            // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                  die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+
+            $sql = "UPDATE tasks SET neverending = ? WHERE id = ?";
+           if($stmt = $link->prepare($sql))
+           {
+                $neverending1 = false;
+                if($neverending=="true")
+                {
+                    $neverending1 = true;
+                }
+                $stmt->bind_param("ii", $neverending1, $this->id);
+                $stmt->execute();
+                $stmt->close();
+            }
+            else
+            {
+                
+            }
+            mysqli_close($link);
+        }
+    }
+    
+    public function setPlanningDates($start, $end, $timezone)
+    {
+        if($this->id != -1 && $start < $end)
+        {
+        // Write the lead time in the database
+            // 
+            // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                  die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+
+            $sql = "UPDATE tasks SET earlystart = ?, latestart = ?, earlyfinish = ?, latefinish = ? WHERE id = ?";
+           if($stmt = $link->prepare($sql))
+           {
+                $sdate = new DateTime($start, new DateTimeZone($timezone));
+                $edate = new DateTime($end, new DateTimeZone($timezone));
+                $earlystart = $sdate->setTimezone(new DateTimeZone('GMT'))->format('Y-m-d H:i:s');
+                $latestart = $sdate->setTimezone(new DateTimeZone('GMT'))->format('Y-m-d H:i:s');
+                $earlyfinish = $edate->setTimezone(new DateTimeZone('GMT'))->format('Y-m-d H:i:s');
+                $latefinish = $edate->setTimezone(new DateTimeZone('GMT'))->format('Y-m-d H:i:s');
+                $stmt->bind_param("ssssi", $earlystart, $latestart, $earlyfinish, $latefinish, $this->id);
+                $stmt->execute();
+                $stmt->close();
+            }
+            else
+            {
+            }
+            mysqli_close($link);
+        }
+    }
+    
+    /*
+     * Returns:
+     * 0 if generic error
+     * 1 if ok
+     * 2 if category not found
+     */
+    public function changeCategory($category_id)
+    {
+        $ret = 0;
+        if($this->id != -1)
+        {
+            $cat = new Category($category_id);
+            if($cat->id != -1)
+            {
+                // Write the lead time in the database
+                // 
+                // Attempt insert query execution
+                $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+                // Check connection
+                if($link === false){
+                      die("ERROR: Could not connect. " . mysqli_connect_error());
+                }
+
+                $sql = "UPDATE categoriestasks SET categoryid = ? WHERE taskid = ?";
+               if($stmt = $link->prepare($sql))
+               {
+                    $stmt->bind_param("ii", $category_id, $this->id);
+                    $stmt->execute();
+                    $stmt->close();
+                }
+                else
+                {
+                }
+                mysqli_close($link);
+            }
+            else
+            {
+                $ret = 2;
+            }
+        }
+        else
+        {
+            $ret = 3;
+        }
+        return $ret;
+    }
 }

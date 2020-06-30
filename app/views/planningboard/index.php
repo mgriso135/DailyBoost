@@ -310,6 +310,7 @@
                       +"<th></th>"
                               +"<th><?= TASKLIST_CATEGORYNAME ?></th>"
                                 +"<th><?= TASKLIST_TASKNAME ?></th>"
+                        +"<th><?= _TASKLIST_TASKDESCRIPTION ?></th>"
                                 +"<th><?= TASKLIST_STATUS ?></th>"
                                 +"<th><?= TASKLIST_EARLYSTART ?></th>"
                                 +"<th><?= TASKLIST_LATESTART ?></th>"
@@ -351,10 +352,13 @@
                                     
                                 
                           strTable += "<input type='hidden' id='categoryid_" + res[i].id + "' value='" + res[i].category_id + "' />"
+                          +"<input type='hidden' id='description_" + res[i].id + "' value='" + res[i].description + "' />"
+                  +"<input type='hidden' id='neverending_" + res[i].id + "' value='" + res[i].neverending + "' />"
                                   +"<tr id='task_"+res[i].id+"'>"
                           +"<td><span class='edit_task icon-event' style='width:10%; height:10%;color:grey;cursor:pointer;' data-inline='false' id='edittask_"+res[i].id+"'></span></td>"
                           +"<td><span id='categoryname_" + res[i].id + "'>" + res[i].category_name + "</span></td>"
                                   +"<td><span id='taskname_"+res[i].id+"'>" + res[i].name + "</span></td>"
+                          +"<td><span id='taskname_"+res[i].id+"'>" + res[i].description + "</span></td>"
                                 +"<td>"+strstatus+"</td>"
                                     +"<td><span id='taskstartdate_" + res[i].id + "'>"+ strStart + "</span></td>"
                                     +"<td><span id='taskenddate_" + res[i].id + "'>" + strEnd + "</span></td>"
@@ -417,7 +421,8 @@
                // var currDate = new Date(moment($("#startdate").val()).format());
                 //var newdate = moment($("#startdate").val()).add(defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss');
                // $("#taskid").addClass("is-valid");
-                $("#enddate").val(moment($("#startdate").val()).add(defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss'));
+               
+                $("#edittask_modal_enddate").val(moment($("#edittask_modal_startdate").val()).add(defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss'));
                // $("#taskid").removeClass("is-valid");
             });
             
@@ -432,34 +437,168 @@
                 showClose: true,
             })
             .on('dp.change', function(ev){
-                var startd = new Date(moment($("#startdate").val()).format());
-                var endd = new Date(moment($("#enddate").val()).format());
+                var startd = new Date(moment($("#edittask_modal_startdate").val()).format());
+                var endd = new Date(moment($("#edittask_modal_enddate").val()).format());
                 if(startd < endd)
                 {
                     defaultDuration = (endd - startd) / (60 * 60 * 1000);
                 }
                 else
                 {
-                    $("#startdate").val(moment($("#enddate").val()).add(-defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss'));
+                    $("#edittask_modal_startdate").val(moment($("#edittask_modal_enddate").val()).add(-defaultDuration, 'hours').format('YYYY-MM-DD HH:mm:ss'));
                 }
             });
         
         $("#dvLstPlannedTasks").on("click", ".edit_task",function(){
-            console.log("edit " + $(this).prop("id"));
+            $("#edittask_modal_msg").fadeOut();
+            $("#edittask_modal_msg").html("");
+            $("#edittask_modal_msg").removeClass("alert alert-danger");
             var ataskid=$(this).prop("id").split('_');
             if(ataskid.length == 2)
             {
                 var taskid = ataskid[1];
+                $("#edittask_modal_taskid").val(taskid);
                 var startdate = moment($("#taskstartdate_" + taskid).html(), "DD/MM/YYYY HH:mm:ss");
                 var enddate = moment($("#taskenddate_" + taskid).html(), "DD/MM/YYYY HH:mm:ss");
-                console.log(taskid + " - "+ $("#taskstartdate_" + taskid).html() + " - " + $("#taskenddate_" + taskid).html() 
-                        + " " + startdate);
+                var neverending = $("#neverending_" + taskid).val();
+                var description = $("#description_" + taskid).val();
                 
                 $("#edittask_modal_taskname").val($("#taskname_" + taskid).html());
                 $("#edittask_modal_categoryname").val($("#categoryname_" + taskid).html());
-                $("#edittask_modal_startdate").val(moment(startdate).format('DD/MM/YYYY HH:mm:ss'));
-                $("#edittask_modal_enddate").val(moment(enddate).format('DD/MM/YYYY HH:mm:ss'));
+                $("#edittask_modal_startdate").val(moment(startdate).format('YYYY-MM-DD HH:mm:ss'));
+                $("#edittask_modal_enddate").val(moment(enddate).format('YYYY-MM-DD HH:mm:ss'));
+                $("#edittask_modal_description").val(description);
+
+                if(neverending == 1)
+                {
+                    $("#edittask_modal_chkNeverEnding").prop("checked", true);
+                }
+                else
+                {
+                    $("#edittask_modal_chkNeverEnding").prop("checked", false);
+                }
                 $("#edittask_modal").modal('show');
+            }
+            else
+            {
+                $("#edittask_modal_taskid").val("-1");
+                $("#edittask_modal_taskname").val("");
+                $("#edittask_modal_categoryname").val("");
+                $("#edittask_modal_startdate").val(moment("01/01/1970 00:00:00").format('YYYY-MM-DD HH:mm:ss'));
+                $("#edittask_modal_enddate").val(moment("01/01/1970 00:00:00").format('YYYY-MM-DD HH:mm:ss'));
+                $("#edittask_modal_description").val("");
+                $("#edittask_modal_chkNeverEnding").prop("checked", false);
+                $("#edittask_modal_msg").html("Task not found");
+                $("#edittask_modal_msg").addClass("alert alert-danger");
+                $("#edittask_modal_msg").fadeIn();
+            }
+        });
+        
+        $("#edittask_modal_btnSaveTask").click(function(){
+            console.log("Saving changes...");
+            $("#edittask_modal_msg").fadeOut();
+            $("#edittask_modal_msg").html("");
+            $("#edittask_modal_msg").removeClass("alert alert-danger");
+            
+            var taskid = $("#edittask_modal_taskid").val();
+            if(taskid!=-1)
+            {
+                var taskname = $("#edittask_modal_taskname").val();
+                var categoryname = $("#edittask_modal_categoryname").val();
+                var startdate = moment($("#edittask_modal_startdate").val(), "YYYY-MM-DD HH:mm:ss");
+                var enddate = moment($("#edittask_modal_enddate").val(), "YYYY-MM-DD HH:mm:ss");
+                var description = $("#edittask_modal_description").val();
+                var neverending = $("#edittask_modal_chkNeverEnding").prop("checked");
+                
+                var categoryId = $("#categorieslist option[value='" + categoryname + "']").attr('data-id'); 
+                if(categoryId == null || !$.isNumeric(categoryId))
+                {
+                    categoryId = -1;
+                }
+                
+                console.log(taskid + " " + taskname + " " + categoryId + " " + categoryname + " " 
+                        + startdate.format("YYYY-MM-DD HH:mm:ss") + " " + enddate.format("YYYY-MM-DD HH:mm:ss")
+                        + " " + description + " " + neverending);
+                
+                $.ajax({ 
+                   // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
+                   url: "/dailyboost/public/PlanningController/editTask",
+                   type: 'POST',
+                   dataType: "html",
+                   data: {
+                        category_id: categoryId,
+                        taskid: taskid,
+                        taskname: taskname,
+                        taskdescription: description,
+                        neverending: neverending,
+                        start_date: startdate.format("YYYY-MM-DD HH:mm:ss"),
+                        end_date: enddate.format("YYYY-MM-DD HH:mm:ss")
+                   },
+                   success: function (result) {
+                      console.log(result);
+                      if(result == "0")
+                      {
+                            $("#edittask_modal_msg").html("Generic error");
+                            $("#edittask_modal_msg").addClass("alert alert-danger");
+                            $("#edittask_modal_msg").fadeIn();
+                      }
+                      else if(result =="1")
+                      {
+                          $("#edittask_modal_msg").html("Generic error");
+                            $("#edittask_modal_msg").addClass("alert alert-danger");
+                            $("#edittask_modal_msg").fadeIn();
+                      }
+                      else if(result =="2")
+                      {
+                          $("#edittask_modal_msg").html("User not authorized");
+                            $("#edittask_modal_msg").addClass("alert alert-danger");
+                            $("#edittask_modal_msg").fadeIn();
+                      }
+                      else if(result =="3")
+                      {
+                          $("#edittask_modal_msg").html("Category not found");
+                            $("#edittask_modal_msg").addClass("alert alert-danger");
+                            $("#edittask_modal_msg").fadeIn();
+                      }
+                      else if(result =="4")
+                      {
+                          $("#edittask_modal_msg").html("Task not found");
+                            $("#edittask_modal_msg").addClass("alert alert-danger");
+                            $("#edittask_modal_msg").fadeIn();
+                      }
+                      else if(result =="5")
+                      {
+                          $("#edittask_modal_msg").html("User does not own the task");
+                            $("#edittask_modal_msg").addClass("alert alert-danger");
+                            $("#edittask_modal_msg").fadeIn();
+                      }
+                      else
+                      {
+                        var res = JSON.parse(result);
+                        loadTasksPlanned();
+                        $("#edittask_modal").modal('hide');
+                    }
+                   },
+                   error: function (result) {
+                       alert("Error");
+                   },
+                   warning: function (result) {
+                                      alert("Warning");
+                                  }
+                });
+            }
+            else
+            {
+                console.log("Task id not found");
+                $("#edittask_modal_msg").html("Task not found");
+                $("#edittask_modal_msg").addClass("alert alert-danger");
+                $("#edittask_modal_msg").fadeIn();
+                /*$("#edittask_modal_taskname").val("");
+                $("#edittask_modal_categoryname").val("");
+                $("#edittask_modal_startdate").val(moment("01/01/1970 00:00:00").format('YYYY-MM-DD HH:mm:ss'));
+                $("#edittask_modal_enddate").val(moment("01/01/1970 00:00:00").format('YYYY-MM-DD HH:mm:ss'));
+                $("#edittask_modal_description").val("");
+                $("#edittask_modal_chkNeverEnding").prop("checked", false);*/
             }
         });
         
@@ -592,7 +731,7 @@
                                     </span>
                                 </div>
                                 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                <div class="input-group"  />
+                                <div class="input-group">
                                 <input type="checkbox" id="chkNeverEnding" class="form-check-input" /><?= _PLANNINGBOARD_NEVER_ENDING_TASK_CHK ?></div>
 
                             </div>
@@ -657,7 +796,7 @@
         
         
 <div class="modal" tabindex="-1" role="dialog" id="edittask_modal">
-  <div class="modal-dialog" role="document">
+  <div class="modal-dialog modal-lg" role="document">
     <div class="modal-content">
       <div class="modal-header">
         <h4 class="modal-title" id="edittask_modal_title"><?= _MODAL_EDITTASK_TITLE ?></h4>
@@ -666,34 +805,23 @@
         </button>
       </div>
       <div class="modal-body" id="edittask_modal_body">
-        <div class="input-group-lg input-daterange align-items-center form-inline">
-            <div class="form-inline align-middle">
-                            <datalist id="categorieslist">
-                                <?php
-                                if(isset($data['categories_list']))
-                                {
-                                    $cats = $data['categories_list'];
-                                    for($i=0; $i < sizeof($cats); $i++)
-                                    { ?>
-                                      <option data-id="<?= $cats[$i]->id ?>" value="<?= $cats[$i]->name ?>"></option>
-                                    <?php 
-                                    }
-                                }
-                                ?>
-                            </datalist>
-                            <div class="input-group-lg mb-3">
-                                <input id="edittask_modal_taskname" list="opentasks_list" placeholder="<?= _PLACEHOLDER_STARTTASK ?>" class="form-control" maxlength="254" />&nbsp;</div>
-                                <div class="input-group-lg mb-3">
+                <div class="row">
+                    <div class="col-lg-10 align-middle">
+                        <div class="form-inline">
+                            <div class="input-group-lg">
+                                <input id="edittask_modal_taskname" class="form-control" maxlength="254" />&nbsp;</div>
+                                <div class="input-group-lg">
                                       <input id="edittask_modal_categoryname" list="categorieslist" placeholder="<?= _PLACEHOLDER_SELECTCATEGORY ?>" class="form-control" maxlength="254" value="" />
                                 </div>
                             </div>
-                            <p></p>
+                        <div class="form-inline">
+                            <input type="hidden" id="edittask_modal_taskid" />
                                 <div class='input-group date' id='datetimepicker1_modal'>
                                     <input type='text' class="form-control" id="edittask_modal_startdate"  />
                                     <span class="input-group-addon">
                                         <span class="glyphicon glyphicon-calendar"></span>
                                     </span>
-                                </div>&nbsp;
+                                </div>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
                                 <span><?= _PLANNINGBOARD_TO_DATE ?></span>&nbsp;
                                 <div class='input-group date' id='datetimepicker2_modal'>
                                     <input type='text' class="form-control" id="edittask_modal_enddate" />
@@ -701,13 +829,25 @@
                                         <span class="glyphicon glyphicon-calendar"></span>
                                     </span>
                                 </div>
-                                &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-                                <div class="input-group"  />
+                        </div>
+                        <div class="form-inline">
+                                <input type="checkbox" id="edittask_modal_chkNeverEnding" class="form-check-input" /><?= _PLANNINGBOARD_NEVER_ENDING_TASK_CHK ?>
                             </div>
+                        <div class="form-inline input-group-lg">
+                               <textarea id="edittask_modal_description" style="width:100%;" class="form-control" placeholder="<?= _MODAL_EDITTASK_DESCRIPTION_PLACEHOLDER ?>"></textarea>
+                            </div>
+                    </div>
+                <div class="col-lg-2 align-middle">
+                        <div class="input-group form-control-lg pull-left"><button type="button" class="btn btn-primary btn-lg pull-left" id="edittask_modal_btnSaveTask"><?= _PLANNINGBOARD_SAVE ?></button></div>
+                        </div>
+         </div>
       </div>
       <div class="modal-footer">
+          <div id="edittask_modal_msg" style="text-align:left;width:100%"></div>
       </div>
+    
+  
+</div>
+</div>
+</div>
     </div>
-  </div>
-</div>
-</div>

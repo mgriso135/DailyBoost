@@ -733,7 +733,7 @@ class User
             if($link === false){
                 die("ERROR: Could not connect. " . mysqli_connect_error());
             }
-            $sql = "SELECT tasks.id AS tasks_id, tasks.name AS task_name, tasks.status AS tasks_status, "
+            $sql = "SELECT tasks.id AS tasks_id, tasks.name AS task_name, tasks.description AS task_description, tasks.status AS tasks_status, "
                     . " tasks.neverending AS neverending, tasks.plannedcycletime AS plannedcycletime, "
                     . " earlystart, latefinish, categories.id AS category_id, categories.name AS categories_name "
                     . " FROM tasks INNER JOIN categoriestasks ON(tasks.id = categoriestasks.taskid) "
@@ -767,6 +767,7 @@ class User
                     $curr = new Task();
                     $curr->id = $row['tasks_id'];
                     $curr->name = $row['task_name'];
+                    $curr->description = $row['task_description'];
                     $curr->status = $row['tasks_status'];
                     $curr->neverending = $row['neverending'];
                     $curr->plannedcycletime = $row['plannedcycletime'];
