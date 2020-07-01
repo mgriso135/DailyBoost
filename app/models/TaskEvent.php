@@ -36,7 +36,7 @@ class TaskEvent {
             $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
             // Check connection
             if($link === false){
-                                die("ERROR: Could not connect. " . mysqli_connect_error());
+                die("ERROR: Could not connect. " . mysqli_connect_error());
             }
 
             $max=0;

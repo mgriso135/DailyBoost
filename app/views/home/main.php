@@ -281,16 +281,18 @@ function init()
                  category_id: categoryId,
              },
              success: function (result) {
+                 //console.log(result);
                  var tasks = JSON.parse(result);
                  var strrow = "<table class='table table-striped table-hover table-borderless' id='tblTasksInExecution'><tbody>";
                  for(var i = 0; i < tasks.length; i++)
                  {
-                     strrow += "<tr id='execrow_" + tasks[i].id + "'><td><span class='icon-control-pause btnpausetask' style='width:36px;height:36px;color:grey;cursor:pointer;' name='btnpausetask' id='pausetask_"+tasks[i].id+"' title='<?= _ICON_PAUSE ?>'></span>"
-                           + "</td><td>"
-                           + "<span class='icon-note' style='width: 36px; height: 36px; color:grey;cursor:pointer;' name='btnnote' id='pausetask_" + tasks[i].id + "' title='<?= _ICON_NOTE ?>'></span>"
-                           + "</td><td>"
-                           + "<input type='hidden' value='" + tasks[i].name + "' id='taskname_"+tasks[i].id+"' />"
-                           + tasks[i].name + "</td><td>";
+                     strrow += "<tr id='execrow_" + tasks[i].id + "'>"
+                           + "<td><span class='icon-control-pause btnpausetask' style='width:36px;height:36px;color:grey;cursor:pointer;' name='btnpausetask' id='pausetask_"+tasks[i].id+"' title='<?= _ICON_PAUSE ?>'></span></td>"
+                           +"<td><span class='icon-note' style='width: 36px; height: 36px; color:grey;cursor:pointer;' name='btnnote' id='note_" + tasks[i].id + "' title='<?= _ICON_NOTE ?>'></span></td>"
+                           +"<td><input type='hidden' value='" + tasks[i].category_name + "' id='categoryname_"+tasks[i].id+"' />" + tasks[i].category_name + "</td>"
+                           +"<td><input type='hidden' value='" + tasks[i].name + "' id='taskname_"+tasks[i].id+"' />" + tasks[i].name + "</td>"
+                   +"<td><input type='hidden' value='" + tasks[i].description + "' id='taskdescription_"+tasks[i].id+"' />" + tasks[i].description + "</td>"
+                           +"<td>";
                    if(!tasks[i].neverending)
                    {
                        strrow += "<span class='icon-loop btnfinishtask' style='width: 36px; height: 36px; color:grey;cursor:pointer;' name='btnfinishtask' id='finishtask_"+tasks[i].id+"' title='<?= _ICON_END ?>'></span>"
@@ -308,6 +310,35 @@ function init()
                             }
             });
   }
+  
+  $("#frmTasks").on("click", ".icon-note", function(){
+  var sid = $(this).prop("id");
+  var aid = sid.split('_');
+  if(aid.length == 2)
+  {
+      var taskid = aid[1];
+      console.log(taskid);
+      $.ajax({ 
+         // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
+         url: "/dailyboost/public/TasksExecutionController/tasks_notes_list",
+         type: 'POST',
+         dataType: "html",
+         data: {
+             taskid: taskid
+         },
+         success: function (result) {
+            $("#frmTaskNotes").html(result);
+         },
+         error: function (result) {
+             alert("Error");
+         },
+         warning: function (result) {
+             alert("Warning");
+         }
+    });
+  }
+      
+  });
   
   loadTasksInExecution();
   
@@ -463,3 +494,5 @@ function init()
     </div>
   </div>
 </div>
+        
+        <div id="frmTaskNotes"></div>

@@ -525,6 +525,7 @@ class User
                 {
                     if($category_id == -1)
                     {
+                        $curr->loadCategories();
                         array_push($this->tasks_in_execution, $curr);
                     }
                     else

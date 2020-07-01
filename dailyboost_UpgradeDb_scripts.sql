@@ -72,3 +72,33 @@ ALTER TABLE `dailyboost`.`taskstimespans`
 DROP INDEX `endeventid_UNIQUE` ,
 DROP INDEX `starteventid_UNIQUE` ;
 ;
+
+
+
+
+CREATE TABLE `dailyboost`.`tasksnotes` (
+  `id` INT NOT NULL,
+  `taskid` INT NOT NULL,
+  `userid` INT NOT NULL,
+  `date` DATETIME NOT NULL,
+  `note` TEXT NULL,
+  PRIMARY KEY (`id`),
+  INDEX `usernote_FK1_idx` (`userid` ASC) VISIBLE,
+  INDEX `tasknote_FK2_idx` (`taskid` ASC) VISIBLE,
+  CONSTRAINT `usernote_FK1`
+    FOREIGN KEY (`userid`)
+    REFERENCES `dailyboost`.`users` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION,
+  CONSTRAINT `tasknote_FK2`
+    FOREIGN KEY (`taskid`)
+    REFERENCES `dailyboost`.`tasks` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE NO ACTION);
+	
+	ALTER TABLE `dailyboost`.`tasksnotes` 
+ADD COLUMN `public` BIT NULL AFTER `note`;
+ALTER TABLE `dailyboost`.`tasksnotes` 
+CHANGE COLUMN `public` `private` BIT(1) NOT NULL ;
+
+

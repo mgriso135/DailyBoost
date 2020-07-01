@@ -168,4 +168,57 @@ class TasksExecutionController extends Controller {
         }
         return null;
     }
+    
+    public function tasks_notes_list()
+    {
+        $taskid = $_POST['taskid'];
+        if($_SESSION['isLoggedIn'] && strlen($_SESSION["userid"])>0)
+        {
+            if($taskid>0)
+            {
+                $this->model('Task');
+                $tsk = new Task($taskid);
+                if($tsk->id!=-1)
+                {
+                    $tsk->loadNotes();
+                    $this->view('tasksexecution/tasksnotesform', ['task_id' => $tsk->id, 'tasks_notes' => $tsk->notes]);
+                }
+            }
+        }
+    }
+    
+    public function addNote()
+    {
+        $taskid = $_POST['taskid'];
+        $note = $_POST['note'];
+        $private = $_POST['private'];
+        if($private == "true")
+        {
+            $private = 1;
+        }
+        else {
+            $private = 0;
+        }
+        
+        if($_SESSION['userid'] > -1 && $_SESSION['isLoggedIn'])
+        {
+            $user_id = $_SESSION['userid'];
+            if($taskid > 0 && strlen($note)>0)
+            {
+                $this->model('Task');
+                $tsk = new Task($taskid);
+                $tsknote = $tsk->addNote($user_id, $note, $private);
+                if($tsknote >=0)
+                {
+                    $tsknt = new TaskNote($tsknote);
+                    $ret = json_encode($tsknt);
+                }
+                else
+                {
+                    $ret= -2;
+                }
+            }
+        }
+        echo $ret;
+    }
 }

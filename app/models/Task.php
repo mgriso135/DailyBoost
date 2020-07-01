@@ -2,6 +2,7 @@
 require_once 'User.php';
 require_once 'Category.php';
 require_once 'TaskEvent.php';
+require_once 'TaskNote.php';
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -44,6 +45,8 @@ class Task {
     public $owners; // Users that belongs from the categories of this task
     
     public $events;
+    
+    public $notes;
     
     public function __construct($taskid=-1)
     {
@@ -122,6 +125,8 @@ class Task {
         //if($result->num_rows === 0) { die("No categories found");}
         while($row = $result->fetch_assoc()) {
             $curr = new Category($row['categoryid']);
+            $this->category_id = $curr->id;
+            $this->category_name = $curr->name;
             array_push($this->categories, $curr);
         }
         $ret = 1;
@@ -1079,6 +1084,99 @@ class Task {
         else
         {
             $ret = 3;
+        }
+        return $ret;
+    }
+
+    public function loadNotes()
+    {
+        $this->notes = array();
+        if($this->id!=-1)
+        {
+            if(isset($_SESSION['userid']) && $_SESSION['userid'] != "")
+            {
+                $user_id = $_SESSION['userid'];
+                $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+                // Check connection
+                if($link === false){
+                    die("ERROR: Could not connect. " . mysqli_connect_error());
+                }
+                $sql = "SELECT id FROM tasksnotes WHERE taskid=? AND (userid=? OR private=false)";
+                if($stmt = $link->prepare($sql))
+                {
+                    $stmt->bind_param("ii", $this->id, $user_id);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    while($row = $result->fetch_assoc()) {
+                        $curr = new TaskNote($row['id']);
+                         array_push($this->notes, $curr);
+                    }
+                    $stmt->close();
+                }
+                mysqli_close($link);
+            }
+        }
+    }
+    
+    /* Returns:
+     * -1 if generic error
+     * Note Id if everything is ok
+     * -2 if user not found
+     * -3 if task not initialized
+     */
+    public function addNote($user_id, $note, $private)
+    {
+        $ret = -1;
+        if($this->id!=-1)
+        {
+        // Attempt insert query execution
+        $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+        // Check connection
+        if($link === false){
+                            die("ERROR: Could not connect. " . mysqli_connect_error());
+        }
+       
+        $max=0;
+        // Get max id value
+        $sql = "SELECT MAX(id) FROM tasksnotes";
+       if($stmt = $link->prepare($sql))
+       {          
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if($result->num_rows === 0) {$max=0;}
+            else{
+            while($row = $result->fetch_assoc()) {
+                 $max = $row['MAX(id)'] + 1;
+            }
+            }
+            $stmt->close();
+        }
+        
+        $sql = "INSERT INTO tasksnotes(id, taskid, userid, date, note, private) VALUES (?,?,?,?,?,?)";
+        if($stmt = $link->prepare($sql))
+        {          
+            $date = gmdate("Y-m-d H:i:s");
+             $stmt->bind_param("iiissi", $max, $this->id, $user_id, $date, $note, $private);
+             if($stmt->execute())
+             {
+                 $ret = $max;
+             }
+             else
+             {
+                 $ret = -4;
+             }
+             $stmt->close();
+         }
+         else
+         {
+             echo $link->error;
+         }
+         mysqli_close($link);
+        }
+        else
+        {
+            $ret = -1;
         }
         return $ret;
     }
