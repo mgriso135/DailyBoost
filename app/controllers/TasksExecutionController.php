@@ -221,4 +221,73 @@ class TasksExecutionController extends Controller {
         }
         echo $ret;
     }
+
+    public function UpComingTasks()
+    {
+        $category_id=$_POST['category_id'];
+        $title = "DailyBoost: Main app";
+        $category_list = array();
+        $tasks_in_execution = array();
+        if($_SESSION['isLoggedIn'] && strlen($_SESSION["username"])>0)
+        {            
+            $this->model('User');
+            $usr = new User($_SESSION['userid']);
+            $this->model('Category');
+            if($category_id!=-1)
+            {
+                $cat = new Category($category_id);
+                if($cat->id == -1)
+                {
+                    $category_id = -1;
+                }
+            }
+            
+            $tasklist = array();
+            if($category_id!=-1)
+            {
+                // Loads tasks of the chosen category
+                $cat = new Category($category_id);
+                $cat->loadPausedTasks();
+                $tasklist = $cat->tasks;
+                $category_filter_name = $cat->name;
+            }
+            else
+            {
+                $this->model('Task');
+                $usr->loadCategories();
+                for($i=0; $i < sizeof($usr->categories); $i++)
+                {
+                    array_push($category_list, $usr->categories[$i]);
+                    $usr->categories[$i]->loadPausedTasks();        
+                    for($j=0;$j< sizeof($usr->categories[$i]->tasks);$j++)
+                    {
+                        array_push($tasklist, $usr->categories[$i]->tasks[$j]);
+                    }
+                }
+
+                // Accounts categories
+                $usr->loadAccounts();
+                for($i=0; $i < sizeof($usr->accounts); $i++)
+                {
+                    $curracc = $usr->accounts[$i];
+                    $curracc->loadCategories();
+                    for($j=0;$j< sizeof($curracc->categories);$j++)
+                    {
+                        array_push($category_list, $curracc->categories[$j]);
+                        $curracc->categories[$j]->loadPausedTasks();
+                        for($k=0;$j< sizeof($curracc->categories[$j]->tasks);$k++)
+                        {
+                            array_push($tasklist, $curracc->categories[$j]->tasks[$k]);
+                        }
+                    }                    
+                }
+            }
+            $tasklist_sorted = from($tasklist)->orderBy('$v->neverending')->thenBy('$v->latefinish')->thenBy('$v->earlystart')->toArray();
+            echo json_encode($tasklist_sorted);
+        }
+        else
+        {
+        }
+    }
+    
 }

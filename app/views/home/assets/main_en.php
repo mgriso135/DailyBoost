@@ -7,6 +7,7 @@ define("_CATEGORY_FILTER", "Category: ");
 define("_TASKS_IN_EXECUTION", "Tasks in execution");
 define("_ICON_PAUSE", "Pause task");
 define("_ICON_END", "End task");
+define("_ICON_START", "Start task");
 define("_ICON_NOTE", "Take a note");
 define("_CATEGORY_UNDEFINED_TITLE", "Error");
 define("_CATEGORY_UNDEFINED_BODY", "Error: it is necessary to define a category");
@@ -18,4 +19,9 @@ define("_MISSING_NAME_TITLE", "You\'re in a hurry!");
 define("_MISSING_NAME_BODY", "Please choose a task or introduce the name of a new one!");
 define("_REPORTS_DAILYREPORT", "Daily Report");
 define("_PLANNINGBOARD", "Planning Board");
+define("_UPCOMING_TASKS", "Upcoming tasks");
+define("_CATEGORY_NAME", "Category");
+define("_TASK_NAME", "Task");
+define("_TASK_DESCRIPTION", "Description");
+define("_DUE_DATE", "Due date");
 ?>

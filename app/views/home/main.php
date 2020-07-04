@@ -115,6 +115,7 @@ function init()
                      // Delete item in datalist
                      $("#dlitem_" + result).remove();
                    $('#taskid').val('');
+                   loadUpComingTasks();
                    loadTasksInExecution();
                  }
                  else if(result == "-6")
@@ -164,6 +165,62 @@ function init()
         
   });
   
+  $("#frmUpcomingTasks").on("click", ".btnstartupcomingtask", function(){
+    console.log("Start " + $(this).prop("id") + " aaa");
+    var ataskid = $(this).prop("id").split('_');
+    var tid = ataskid[1];
+    var categoryId = $("#upcoming_categoryId_"+tid).val();
+
+            var url = "/dailyboost/public/TasksExecutionController/startTask/"
+        //console.log(url);
+        $.ajax({ 
+        url: url,
+             type: 'POST',
+             dataType: "html",
+             contentType: "application/x-www-form-urlencoded",
+             data: {
+                 user_id: userId,
+                 category_id: categoryId,
+                 task_id: tid,
+                 taskname: ''
+             },
+             success: function (result) {
+                 if(parseInt(result) > 0)
+                 {
+                     // Delete item in datalist
+                     $("#dlitem_" + result).remove();
+                   $('#taskid').val('');
+                   loadUpComingTasks();
+                   loadTasksInExecution();
+                 }
+                 else if(result == "-6")
+                 {
+                    $("#modal_title").html('<?= _MAX_TASKS_REACHED_TITLE ?>');
+                    $("#modal_body").html('<?= _MAX_TASKS_REACHED_BODY ?>');
+                    $("#messages_modal").modal('show');
+                    $('#taskid').val('');
+                    setTimeout(function() {$('#messages_modal').modal('hide');}, 3000);
+                 }
+                 else
+                 {
+                    $("#modal_title").html('<?= _GENERIC_ERROR_TITLE ?>');
+                    $("#modal_body").html('<?= _GENERIC_ERROR_BODY ?>'); 
+                    $("#messages_modal").modal('show');
+                    //$('#taskid').val('');
+                    setTimeout(function() {$('#messages_modal').modal('hide');}, 3000);
+                 }
+             },
+             error: function (result) {
+                                alert("Error");
+                                $('#taskid').val('');
+             },
+             warning: function (result) {
+                                alert("Warning");
+                                $('#taskid').val('');
+                            }
+            });
+  });
+  
   $("#frmTasks").on("click", ".btnpausetask", function(){
       var sid = $(this).prop("id").split('_');
       if(sid.length == 2)
@@ -195,6 +252,7 @@ function init()
                      // add a row to the datalist
                      var stroption = "<option id='dlitem_"+id+"' data-id='"+id+"' value='" + taskname + "' label='" + taskname + "'></option>";
                      $("#opentasks_list").prepend(stroption);
+                     loadUpComingTasks();
                      loadTasksInExecution();
                  }
                  else
@@ -242,6 +300,7 @@ function init()
                  {
                      // remove the row from the table of executing tasks
                      $("#execrow_"+id).remove();
+                     loadUpComingTasks();
                      loadTasksInExecution();
                  }
                  else
@@ -340,7 +399,64 @@ function init()
       
   });
   
-  loadTasksInExecution();
+  function loadUpComingTasks()
+  {
+      console.log("loadUpComingTasks");
+      $.ajax({ 
+             // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
+             url: "/dailyboost/public/TasksExecutionController/UpComingTasks",
+             type: 'POST',
+             dataType: "html",
+             data: {
+                    category_id: categoryId,            
+             },
+             success: function (result) {
+                 //console.log(result);
+                 var tasks = JSON.parse(result);
+                 var strrow = "<table class='table table-striped table-hover table-borderless' id='tblUpcomingTasks'>"
+                    +"<thead><tr><th></th><th><?= _CATEGORY_NAME ?></th>"
+            +"<th><?= _TASK_NAME ?></th>"
+    +"<th><?= _TASK_DESCRIPTION ?></th>"
+    +"<th><?= _DUE_DATE ?></th>"
+            +"</tr></thead>"
+            +"<tbody>";
+    var currdate = new Date();
+                 for(var i = 0; i < tasks.length; i++)
+                 {
+                     var bgcolor ="";
+                     if(tasks[i].neverending == 0 && moment(tasks[i].latefinish, "YYYY/MM/DD HH:mm:ss") < currdate)
+                     {
+                         bgcolor = "background-color: red;";
+                     }
+                     else if(tasks[i].neverending == 0 && moment(tasks[i].earlystart, "YYYY/MM/DD HH:mm:ss") < currdate && currdate < moment(tasks[i].latefinish, "YYYY/MM/DD HH:mm:ss"))
+                     {
+                         bgcolor = "background-color: yellow;";
+                     }
+                     strrow += "<tr id='execrow_" + tasks[i].id + "' style='"+bgcolor+"'>"
+                     + "<input type='hidden' id='upcoming_categoryId_" + tasks[i].id + "' value='+" + tasks[i].category_id + "+' />"
+                           + "<td><span class='icon-control-play btnstartupcomingtask' style='width:36px;height:36px;color:grey;cursor:pointer;' name='btnstartupcomingtask' id='btnstartupcomingtask_"+tasks[i].id+"' title='<?= _ICON_START ?>'></span></td>"
+                           //+"<td><span class='icon-note' style='width: 36px; height: 36px; color:grey;cursor:pointer;' name='btnnote' id='note_" + tasks[i].id + "' title='<?= _ICON_NOTE ?>'></span></td>"
+                           +"<td><input type='hidden' value='" + tasks[i].category_name + "' id='categoryname_"+tasks[i].id+"' />" + tasks[i].category_name + "</td>"
+                           +"<td><input type='hidden' value='" + tasks[i].name + "' id='taskname_"+tasks[i].id+"' />" + tasks[i].name + "</td>"
+                   +"<td><input type='hidden' value='" + tasks[i].description + "' id='taskdescription_"+tasks[i].id+"' />" + tasks[i].description + "</td>"
+                    + "<td>"+moment(tasks[i].latefinish).format("DD/MM/YYYY HH:mm:ss")+"</td>"
+                         ;
+                   strrow += "</tr>";
+                 }
+                 strrow += "</tbody></table>";
+                 $("#frmUpcomingTasks").html(strrow);
+             },
+             error: function (result) {
+                 alert("Error");
+             },
+             warning: function (result) {
+                alert("Warning");
+            }
+    });
+  }
+  
+ loadTasksInExecution();
+ loadUpComingTasks();
   
   $("messages_modal").modal('hide');
   init();
@@ -467,7 +583,11 @@ function init()
                     <p class='h4'><?= _TASKS_IN_EXECUTION ?></p>
                 <div id="frmTasks" class="table-responsive">
                    
-                </div>               
+                </div>       
+                    <p class='h4'><?= _UPCOMING_TASKS ?></p>
+                <div id="frmUpcomingTasks" class="table-responsive">
+                   
+                </div>   
             </div>
             </div>
         </div>

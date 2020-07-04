@@ -1,6 +1,7 @@
 <?php
     $lang = $_SESSION['language'];
     require_once "assets/home_{$lang}.php"; 
+    use YaLinqo\Enumerable;
 
 class Home extends Controller
 {
@@ -33,7 +34,7 @@ class Home extends Controller
     
     public function Main($category_id=-1)
     {
-        $title = "Main app";
+        $title = "DailyBoost: Main app";
         $category_list = array();
         $category_filter_name = _ALL_CATEGORIES;
         $tasks_in_execution = array();
@@ -95,10 +96,10 @@ class Home extends Controller
             }
             
               $usr->loadTasksInExecution($category_id);
-              $tasks_in_execution = $usr->tasks_in_execution;
-            
+              $tasks_in_execution = $usr->tasks_in_execution;             
+              $tasklist_sorted = from($tasklist)->orderBy('$v->neverending')->thenBy('$v->latefinish')->thenBy('$v->earlystart')->toArray();
             $this->view('/layouts/layout_header', ['title' => $title]);
-            $this->view('home/main', ['title'=>"DailyBoost",'tasks' => $tasklist, 'category' => $category_id,
+            $this->view('home/main', ['title'=>"DailyBoost",'tasks' => $tasklist_sorted, 'category' => $category_id,
                 'category_filter_name' => $category_filter_name,
                 'categories_list' => $category_list,
                 'tasks_in_execution' => $tasks_in_execution]);
@@ -109,4 +110,6 @@ class Home extends Controller
             header("Location: index");
         }
     }
+    
+    
 }

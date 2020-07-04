@@ -154,6 +154,7 @@ class Category {
             $result = $stmt->get_result();
                 while($row = $result->fetch_assoc()) {
                     $curr = new Task($row['taskid']);
+                    $curr->loadCategories();
                     array_push($this->tasks, $curr);
                 }
             $stmt->close();
