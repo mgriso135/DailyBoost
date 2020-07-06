@@ -48,9 +48,10 @@ class CategoriesController extends Controller {
         return $ret;
     }
     
-    public function addusercategory($category_name)
+    public function addusercategory()
     {
         $ret = 0;
+        $category_name = $_POST['category_name'];
         if(isset($_SESSION['userid']))
         {
             $userid = $_SESSION['userid'];

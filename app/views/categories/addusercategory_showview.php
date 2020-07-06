@@ -11,10 +11,11 @@
            {
                $.ajax({ 
              // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
-             url: "/dailyboost/public/CategoriesController/addusercategory/" + catname,
+             url: "/dailyboost/public/CategoriesController/addusercategory",
              type: 'POST',
              dataType: "html",
              data: {     
+                 'category_name' : catname
              },
              success: function (result) {
                   console.log(result);

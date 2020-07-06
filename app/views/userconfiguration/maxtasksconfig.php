@@ -13,10 +13,11 @@
             var tmz = $("#maxtasks").val();
             $.ajax({ 
              // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
-             url: "/dailyboost/public/UserConfigurationController/savemaxtasks/" + tmz,
+             url: "/dailyboost/public/UserConfigurationController/savemaxtasks",
              type: 'POST',
              dataType: "html",
              data: {
+                 'max_no_tasks': tmz
                                 
              },
              success: function (result) {

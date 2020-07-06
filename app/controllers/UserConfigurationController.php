@@ -45,8 +45,9 @@ class UserConfigurationController extends Controller {
         }
     }
     
-    public function savetimezone($newtimezone)
+    public function savetimezone()
     {
+        $newtimezone = $_POST['timezone'];
         $ret = 0;
         if($_SESSION['isLoggedIn'] && strlen($_SESSION["username"])>0)
         {
@@ -71,8 +72,9 @@ class UserConfigurationController extends Controller {
         else{
         }
     }    
-    public function savemaxtasks($max_no_tasks)
+    public function savemaxtasks()
     {
+        $max_no_tasks = $_POST['max_no_tasks'];
         $ret = 0;
         if($_SESSION['isLoggedIn'] && strlen($_SESSION["username"])>0 && $max_no_tasks>0)
         {

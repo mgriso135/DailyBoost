@@ -32,13 +32,15 @@ class TasksExecutionController extends Controller {
             // Checks that category exists
             $this->model('Category');
             $cat = new Category($category_id);
+            
             if($task_id!=-1 || $cat->id != -1)
             {
                 $cat_id = -1;
                 if($task_id ==-1)
                 {
+
                     // Creates the new task
-                    $task_id = $cat->addTask($taskname);
+                    $task_id = $cat->addTask($taskname, "", 'now', '+1 hour');
                 }
 
                 // Then we can start the task!

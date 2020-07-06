@@ -85,14 +85,18 @@ function init()
         if(categoryId == -1)
         {
             var catName = $('#addtask_category').val();
-            categoryId = $("#categorieslist option[value='" + catName + "']").attr('data-id'); 
-            if(categoryId == null || !$.isNumeric(categoryId))
+            addCategoryId = $("#categorieslist option[value='" + catName + "']").attr('data-id'); 
+            if(categoryId == null || !$.isNumeric(addCategoryId))
             {
-                categoryId = -1;
+                addCategoryId = -1;
             }
         }
+        else
+        {
+            addCategoryId = -1;
+        }
         // if taskid exists, then resumen. If catgory exists, then create a new one
-        if(tid!=-1 || categoryId != -1)
+        if(tid!=-1 || addCategoryId != -1)
         {
             //console.log(encodeURIComponent(taskName));
             var url = "/dailyboost/public/TasksExecutionController/startTask/"
@@ -104,7 +108,7 @@ function init()
              contentType: "application/x-www-form-urlencoded",
              data: {
                  user_id: userId,
-                 category_id: categoryId,
+                 category_id: addCategoryId,
                  task_id: tid,
                  taskname: taskName
              },
@@ -113,7 +117,7 @@ function init()
                  if(parseInt(result) > 0)
                  {
                      // Delete item in datalist
-                     $("#dlitem_" + result).remove();
+                   $("#dlitem_" + result).remove();
                    $('#taskid').val('');
                    loadUpComingTasks();
                    loadTasksInExecution();
@@ -401,7 +405,6 @@ function init()
   
   function loadUpComingTasks()
   {
-      console.log("loadUpComingTasks");
       $.ajax({ 
              // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
              url: "/dailyboost/public/TasksExecutionController/UpComingTasks",

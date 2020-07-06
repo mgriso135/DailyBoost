@@ -12,11 +12,11 @@
             var tmz = encodeURI($("#ddlTimezones option:selected" ).val().replace(/\//g, "."));
             $.ajax({ 
              // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
-             url: "/dailyboost/public/UserConfigurationController/savetimezone/" + tmz,
+             url: "/dailyboost/public/UserConfigurationController/savetimezone",
              type: 'POST',
              dataType: "html",
              data: {
-                                
+                'timezone' : tmz,
              },
              success: function (result) {
                  if(result == "1")
