@@ -121,8 +121,6 @@
                     <p></p>
                     <img src="../../../img/three-circles.gif" id="imgLoadGoogleCalendarLinkView" style="max-width: 20px; max-height: 20px;" />
                     <div id="frmGoogleCalendarLinkView"></div>
-
-
 </div>
 </div>
  </div>

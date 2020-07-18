@@ -68,4 +68,13 @@ gapi.signin2.render('signinButton', {
   }
 </script>-->
 <h5><?= _LINK_EXTERNAL_CALENDARS ?></h5>
-<div id="signinButton">Sign in with Google</div>
+<div class="container">
+    <div class="row">
+    <div class="col-sm text-center">
+    <input type="image" src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Google_Calendar_icon.svg" id="signinButton" style="max-width: 50px;" /><br />Google Calendar
+    </div>
+    <div class="col-sm text-center">
+    <input type="image" src="https://img.icons8.com/color/96/000000/outlook-calendar.png" id="outlookCalSignIn" style="max-width: 50px;" /><br />Outlook Calendar
+    </div>
+</div>
+</div>
