@@ -1,7 +1,8 @@
 <?php
     $lang = $_SESSION['language'];
-    require_once "assets/main_{$lang}.php"; 
+    require_once "assets/main_{$lang}.php";
     
+    require_once("../bin/initialize.php");
 ?>
 
 <script>
@@ -73,10 +74,35 @@
             });
         }
         
+        function loadGoogleCalendarLinkView()
+        {
+            $("#imgLoadGoogleCalendarLinkView").fadeIn();
+            $.ajax({ 
+             url: "/dailyboost/public/UserConfigurationController/GoogleCalendarLinkView",
+             type: 'POST',
+             dataType: "html",
+             data: {
+                                
+             },
+             success: function (result) {
+                $("#imgLoadGoogleCalendarLinkView").fadeOut();
+                $("#frmGoogleCalendarLinkView").html(result);
+             },
+             error: function (result) {
+                 alert("Error");
+             },
+             warning: function (result) {
+                 alert("Warning");
+             }
+            });
+        }
+        
         $("#imgLoadDefaultTask").fadeOut();
+        $("#imgLoadGoogleCalendarLinkView").fadeOut();
         loadTimeZoneConfig();
         loadMaxNoTasksConfig();
         loadDefaultTaskConfig();
+        loadGoogleCalendarLinkView();
     });
     </script>
     
@@ -92,6 +118,11 @@
                     <p></p>
                     <img src="../../../img/three-circles.gif" id="imgLoadDefaultTask" style="max-width: 20px; max-height: 20px;" />
                     <div id="frmDefaultTask"></div>
-                </div>
+                    <p></p>
+                    <img src="../../../img/three-circles.gif" id="imgLoadGoogleCalendarLinkView" style="max-width: 20px; max-height: 20px;" />
+                    <div id="frmGoogleCalendarLinkView"></div>
+
+
+</div>
+</div>
  </div>
-    </div>

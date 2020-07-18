@@ -1,5 +1,6 @@
 <?php
-
+//require_once("../../../vendor/autoload.php");
+require_once("../bin/utilities.php");
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -114,5 +115,55 @@ class UserConfigurationController extends Controller {
             $ret = 1;
         }
         echo $ret;
+    }
+    
+    public function GoogleCalendarLinkView()
+    {
+        $title = "Main app";
+        if($_SESSION['isLoggedIn'] && strlen($_SESSION["username"])>0)
+        {
+            $this->model('User');
+            $usr = new User($_SESSION['userid']);
+            if($usr->id!=-1)
+            {
+                $usr->loadConfiguration();
+                $this->view('/userconfiguration/GoogleCalendarLinkView');
+            }
+        }
+        else{
+        }
+    }
+    
+    public function GoogleCalendarRegisterToken()
+    {
+        if(isset($_POST['code']))
+        {
+            $code = $_POST['code'];
+            // create Client Request to access Google API
+            $client = new Google_Client(['client_id' => AppConfig::$GOOGLE_CLIENT_ID]);
+            $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
+            $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
+            $client->setRedirectUri("http://localhost:88");
+            $client->setAccessType("offline");
+            $client->fetchAccessTokenWithAuthCode(urldecode($code));
+            echo "Expired: " . json_encode($client->isAccessTokenExpired());
+            /*if ($payload) {
+                echo "Expired: " . $client->isAccessTokenExpired()."\n";
+                echo "AT: ". $client->getOAuth2Service()->getRefreshToken() . "\n";
+              $userid = $payload['sub'];
+              echo json_encode($payload);
+              echo "\nAccess token: " . $client->getAccessToken() . "\n\n" . $client->getRefreshToken();
+            } else {
+              // Invalid ID token
+                echo "Invalid ID token";
+            }*/
+
+            
+        }
+ else 
+ {
+     echo "Token not set";
+ }
+ 
     }
 }

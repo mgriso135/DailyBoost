@@ -21,5 +21,8 @@ class AppConfig {
     static $MAIL_USER = "mgrisoster@gmail.com";
     static $MAIL_PASSWORD = "grqqyrmpjdoilxia";
     static $MAIL_ENABLESSL = true;
-
+    
+    static $GOOGLE_CLIENT_ID = "601684082869-cd0dthq3pc8r8eps9nojkt6n2egmmoor.apps.googleusercontent.com";
+    static $GOOGLE_CLIENT_SECRET = "nTQPFeziTh1MC2QR-6DfOWFp";
+    static $GOOGLE_REDIRECT_URI = "http://localhost:88";
 }

@@ -8,6 +8,7 @@
         }
     ],
     "require": {
-        "athari/yalinqo": "dev-master"
+        "athari/yalinqo": "dev-master",
+        "google/apiclient": "* dev-master"
     }
 }
