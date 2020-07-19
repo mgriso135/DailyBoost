@@ -3,6 +3,7 @@ require_once('../bin/utilities.php');
 require_once('Categories.php');
 require_once('AccountModel.php');
 require_once('Task.php');
+require_once('UserExternalApp.php');
 $lang = $_SESSION['language'];
 require_once "assets/User_{$lang}.php"; 
 
@@ -46,6 +47,8 @@ class User
     public $never_ending_tasks;
     public $tasks;
     public $tasks_planned;
+    
+    public $external_apps;
     
     public function __construct($user_id=-1)
     {
@@ -788,5 +791,129 @@ class User
             mysqli_close($link);
         }
         //return $ret;
+    }
+    
+    public function loadExternalApps($AppCategory = "")
+    {
+        $this->external_apps = array();
+        if($this->id != -1)
+        {
+            $usrid=$this->id;
+             // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+            $sql = "SELECT id FROM usersexternalapp WHERE userid = ?";
+            if($AppCategory!="")
+            {
+                $sql.= " AND ExternalAppType LIKE ?";
+            }
+            
+            if($stmt = $link->prepare($sql))
+            {
+                if($AppCategory != "")
+                {
+                    $stmt->bind_param("is", $this->id, $AppCategory);
+                }
+                else
+                {
+                    $stmt->bind_param("i", $this->id);
+                }
+                
+                $stmt->execute();
+                $result = $stmt->get_result();
+                while($row = $result->fetch_assoc()) {
+                    $curr = new UserExternalApp($row['id']);
+                    array_push($this->external_apps, $curr);
+                }
+                $stmt->close();
+            }
+            
+            $ret = 1;
+        
+            mysqli_close($link);
+        }
+    }
+    
+    public function addExternalApp($app_category, $app_name, $token_type, $scope, 
+            $id_token, $access_token, $refresh_token, $created, $expires_in)
+    {
+        if($this->id!=-1 && $app_category != "" && $app_name != "" && $token_type != ""
+            && $scope != "" && $access_token != "" && $refresh_token != "")
+        {
+            // checks if app exists.
+            // If it does not exist, add a new one
+            // If it exists, update the data
+            
+            /*$this->loadExternalApps($app_category);
+            $found = 0;
+            for($i=0; $i < sizeof($this->external_apps); $i++)
+            {
+                if($this->external_apps[$i]->ExternalAppType == $app_category
+                        && $this->external_apps[$i]->ExternalAppName == $app_name)
+                {
+                    $found = 1;
+                }
+            }*/
+            
+            // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+
+            $maxid=0;
+            $sql = "SELECT MAX(id) FROM usersexternalapps";
+            if($stmt = $link->prepare($sql))
+            {
+                if($stmt->execute())
+                {
+                    $result = $stmt->get_result();
+                    while($row = $result->fetch_assoc()) {
+                        $maxid = $row['MAX(id)'] + 1;
+                    }
+                }
+                else
+                {
+                    $stmt->error;
+                    $maxid=0;
+                }
+                $stmt->close();
+            }
+            else
+            {
+                echo $link->error;
+            }
+            
+            echo $maxid;
+            
+            $sql = "INSERT INTO usersexternalapps(id, userid, ExternalAppType, ExternalAppName,"
+                    . " token_type, scope, id_token, access_token, refresh_token, created, expires_in) "
+                    . " VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+           if($stmt = $link->prepare($sql))
+           {
+                $stmt->bind_param("iisssssssss", $maxid, $this->id, $app_category, $app_name,
+                        $token_type, $scope, $id_token, $access_token, $refresh_token, $created, $expires_in);
+                if($stmt->execute())
+                {
+                    $ret = 1;
+                }
+                else
+                {
+                    echo $stmt->error;
+                    $ret = 3;
+                }
+                $stmt->close();
+            }
+            $link->close();
+        }
+        else
+        {
+            $ret = 4;
+        }
+        return $ret;
     }
 }

@@ -136,34 +136,45 @@ class UserConfigurationController extends Controller {
     
     public function GoogleCalendarRegisterToken()
     {
-        if(isset($_POST['code']))
+        if(isset($_SESSION['userid']) && $_SESSION['userid'] != "" && isset($_SESSION['isLoggedIn']))
         {
-            $code = $_POST['code'];
-            // create Client Request to access Google API
-            $client = new Google_Client(['client_id' => AppConfig::$GOOGLE_CLIENT_ID]);
-            $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
-            $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
-            $client->setRedirectUri("http://localhost:88");
-            $client->setAccessType("offline");
-            $client->fetchAccessTokenWithAuthCode(urldecode($code));
-            echo "Expired: " . json_encode($client->isAccessTokenExpired());
-            /*if ($payload) {
-                echo "Expired: " . $client->isAccessTokenExpired()."\n";
-                echo "AT: ". $client->getOAuth2Service()->getRefreshToken() . "\n";
-              $userid = $payload['sub'];
-              echo json_encode($payload);
-              echo "\nAccess token: " . $client->getAccessToken() . "\n\n" . $client->getRefreshToken();
-            } else {
-              // Invalid ID token
-                echo "Invalid ID token";
-            }*/
-
-            
+            if(isset($_POST['code']))
+            {
+                $code = $_POST['code'];
+                // create Client Request to access Google API
+                $client = new Google_Client(['client_id' => AppConfig::$GOOGLE_CLIENT_ID]);
+                $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
+                $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
+                $client->setRedirectUri("http://localhost:88");
+                $client->setAccessType("offline");
+                $client->fetchAccessTokenWithAuthCode(urldecode($code));
+                //echo "Expired: " . json_encode($client->isAccessTokenExpired());
+                $this->model('User');
+                $usr = new User($_SESSION['userid']);
+                //echo "\nAccess token: " . json_encode($client->getAccessToken()) . "\n\n" . $client->getRefreshToken();
+                $a_tok = $client->getAccessToken();
+                /*echo "Calendar " . " " . "Google Calendar" . " " . $a_tok['token_type'] . " Scope: " .  
+                        $a_tok['scope'] . " id token: " . $a_tok['id_token'] . " access_token: " . $a_tok['access_token'] . " refresh token: " .  
+                        $a_tok['refresh_token'] . " created: " . $a_tok['created'] . " expires in: " . $a_tok['expires_in'];*/
+                $ret = $usr->addExternalApp("Calendar", "Google Calendar", $a_tok['token_type'], 
+                        $a_tok['scope'], $a_tok['id_token'], $a_tok['access_token'], 
+                        $a_tok['refresh_token'], $a_tok['created'], $a_tok['expires_in']);
+                /*if ($payload) {
+                    echo "Expired: " . $client->isAccessTokenExpired()."\n";
+                    echo "AT: ". $client->getOAuth2Service()->getRefreshToken() . "\n";
+                  $userid = $payload['sub'];
+                  echo json_encode($payload);
+                  
+                } else {
+                  // Invalid ID token
+                    echo "Invalid ID token";
+                }*/
+            }
         }
- else 
- {
-     echo "Token not set";
- }
- 
+        else 
+        {
+            echo "Token not set";
+        }
+        echo $ret;
     }
 }
