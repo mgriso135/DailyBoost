@@ -835,17 +835,20 @@ class User
         }
     }
     
-    public function addExternalApp($app_category, $app_name, $token_type, $scope, 
+    public function addExternalApp($app_category, $app_name, $account_name, $token_type, $scope, 
             $id_token, $access_token, $refresh_token, $created, $expires_in)
     {
-        if($this->id!=-1 && $app_category != "" && $app_name != "" && $token_type != ""
+        $ret = 0;
+        
+        if($this->id!=-1 && $app_category != "" && $app_name != "" && $account_name != ""
+                && $token_type != ""
             && $scope != "" && $access_token != "" && $refresh_token != "")
         {
             // checks if app exists.
             // If it does not exist, add a new one
             // If it exists, update the data
             
-            /*$this->loadExternalApps($app_category);
+            $this->loadExternalApps($app_category);
             $found = 0;
             for($i=0; $i < sizeof($this->external_apps); $i++)
             {
@@ -854,7 +857,7 @@ class User
                 {
                     $found = 1;
                 }
-            }*/
+            }
             
             // Attempt insert query execution
             $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
@@ -862,7 +865,12 @@ class User
             if($link === false){
                 die("ERROR: Could not connect. " . mysqli_connect_error());
             }
+            
+            
 
+            if($found == 0)
+            {
+                echo "Inside";
             $maxid=0;
             $sql = "SELECT MAX(id) FROM usersexternalapps";
             if($stmt = $link->prepare($sql))
@@ -876,7 +884,7 @@ class User
                 }
                 else
                 {
-                    $stmt->error;
+                    echo $stmt->error;
                     $maxid=0;
                 }
                 $stmt->close();
@@ -888,12 +896,12 @@ class User
             
             echo $maxid;
             
-            $sql = "INSERT INTO usersexternalapps(id, userid, ExternalAppType, ExternalAppName,"
+            $sql = "INSERT INTO usersexternalapps(id, userid, ExternalAppType, ExternalAppName, AccountName, "
                     . " token_type, scope, id_token, access_token, refresh_token, created, expires_in) "
-                    . " VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+                    . " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
            if($stmt = $link->prepare($sql))
            {
-                $stmt->bind_param("iisssssssss", $maxid, $this->id, $app_category, $app_name,
+                $stmt->bind_param("iissssssssss", $maxid, $this->id, $app_category, $app_name, $account_name,
                         $token_type, $scope, $id_token, $access_token, $refresh_token, $created, $expires_in);
                 if($stmt->execute())
                 {
@@ -905,6 +913,11 @@ class User
                     $ret = 3;
                 }
                 $stmt->close();
+            }
+            else
+            {
+                echo $link->error;
+            }
             }
             $link->close();
         }
@@ -929,7 +942,8 @@ class User
                 $client = new Google_Client();
                 $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
                 $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
-                $client->setRedirectUri("https://www.virtualchief.net");
+                //$client->setRedirectUri("https://www.virtualchief.net");
+                $client->setRedirectUri("http://localhost:88");
                 $client->setAccessType("offline");
                 $client->setScopes("profile email https://www.googleapis.com/auth/calendar");
                 $client->fetchAccessTokenWithRefreshToken($refresh_token);
@@ -944,10 +958,11 @@ class User
                     $calService = new Google_Service_Calendar($client);
                     $calendarList = $calService->calendarList->listCalendarList()->items;
 
-for($i = 0; $i<sizeof($calendarList); $i++)
-{
-    echo $calendarList[$i]->summary . "<br />";
-}
+                    for($i = 0; $i<sizeof($calendarList); $i++)
+                    {
+                        //var_dump($calendarList[$i]);
+                        $ret .= $calendarList[$i]->summary . "<br />";
+                    }
                     /*$ret .= $calendarList->description ."<br />";
 /*                    while(true) {
                       foreach ($calendarList->getItems() as $calendarListEntry) {

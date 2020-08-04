@@ -144,15 +144,18 @@ class UserConfigurationController extends Controller {
                 $client = new Google_Client(['client_id' => AppConfig::$GOOGLE_CLIENT_ID]);
                 $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
                 $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
-                $client->setRedirectUri("https://www.virtualchief.net");
-                //$client->setRedirectUri("http://localhost:88");
+                //$client->setRedirectUri("https://www.virtualchief.net");
+                $client->setRedirectUri("http://localhost:88");
                 $client->setAccessType("offline");
                 $client->setScopes("profile email https://www.googleapis.com/auth/calendar");
                 $client->fetchAccessTokenWithAuthCode(urldecode($code));
                 $this->model('User');
                 $usr = new User($_SESSION['userid']);
                 $a_tok = $client->getAccessToken();
-                $ret = $usr->addExternalApp("Calendar", "Google Calendar", $a_tok['token_type'], 
+                $service = new Google_Service_Oauth2($client);
+                $account = $service->userinfo->get();
+                $account_name = $account->email;
+                $ret = $usr->addExternalApp("Calendar", "Google Calendar", $account_name, $a_tok['token_type'], 
                         $a_tok['scope'], $a_tok['id_token'], $a_tok['access_token'], 
                         $a_tok['refresh_token'], $a_tok['created'], $a_tok['expires_in']);
 
@@ -184,5 +187,32 @@ class UserConfigurationController extends Controller {
             echo "Token not set";
         }
         echo $ret;
+    }
+    
+    public function listExternalApps()
+    {
+
+        $categoryId = "";
+        $appslist = array();
+        if(isset($_SESSION['userid']) && $_SESSION['userid'] != "" && isset($_SESSION['isLoggedIn']))
+        {        
+            if(isset($_POST['Category']))
+            {
+                $categoryId = $_POST['Category'];
+            }
+            
+            $this->model('User');
+            $usr = new User($_SESSION['userid']);
+            if($usr->id != -1)
+            {
+                $usr->loadExternalApps($categoryId);
+                for($i = 0; $i < sizeof($usr->external_apps); $i++)
+                {
+                    $usr->external_apps[$i]->checkTokenValidity();
+                }
+                $this->view('/userconfiguration/UserExternalAppsList', ['apps' => $usr->external_apps]);
+            }
+        }
+        return $appslist;
     }
 }

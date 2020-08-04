@@ -9,7 +9,6 @@
 <script>
     function GoogleCalendarRegisterToken(authResult)
     {
-        alert(authResult['code']);
         $.ajax({ 
              // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
              url: "/dailyboost/public/UserConfigurationController/GoogleCalendarRegisterToken",
@@ -34,8 +33,8 @@
       gapi.load('auth2', function() {
         auth2 = gapi.auth2.init({
           client_id: '<?= AppConfig::$GOOGLE_CLIENT_ID ?>',
-          redirect_uri: 'https://www.virtualchief.net',
-          //redirect_uri: 'http://localhost:88',
+          //redirect_uri: 'https://www.virtualchief.net',
+          redirect_uri: 'http://localhost:88',
           // Scopes to request in addition to 'profile' and 'email'
           scope: 'profile email https://www.googleapis.com/auth/calendar'
         });
@@ -73,4 +72,9 @@
     <input type="image" src="https://img.icons8.com/color/96/000000/outlook-calendar.png" id="outlookCalSignIn" style="max-width: 50px;" /><br />Outlook Calendar
     </div>
 </div>
+</div>
+<div class="container">
+    <div class="row">
+        
+    </div>
 </div>
