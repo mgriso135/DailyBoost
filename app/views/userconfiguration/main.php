@@ -97,12 +97,37 @@
             });
         }
         
+        function loadExternalCalendarsView()
+        {
+            $("#imgloadExternalCalendarsView").fadeIn();
+            $.ajax({ 
+             url: "/dailyboost/public/UserConfigurationController/linkCategoriesToCalendars_View",
+             type: 'POST',
+             dataType: "html",
+             data: {
+                                
+             },
+             success: function (result) {
+                $("#imgloadExternalCalendarsView").fadeOut();
+                $("#frmExternalCalendarsView").html(result);
+             },
+             error: function (result) {
+                 alert("Error");
+             },
+             warning: function (result) {
+                 alert("Warning");
+             }
+            });
+        }
+        
         $("#imgLoadDefaultTask").fadeOut();
         $("#imgLoadGoogleCalendarLinkView").fadeOut();
+        $("#imgloadExternalCalendarsView").fadeOut();
         loadTimeZoneConfig();
         loadMaxNoTasksConfig();
         loadDefaultTaskConfig();
         loadGoogleCalendarLinkView();
+        loadExternalCalendarsView();
     });
     </script>
     
@@ -121,6 +146,9 @@
                     <p></p>
                     <img src="../../../img/three-circles.gif" id="imgLoadGoogleCalendarLinkView" style="max-width: 20px; max-height: 20px;" />
                     <div id="frmGoogleCalendarLinkView"></div>
+                    <p></p>
+                    <img src="../../../img/three-circles.gif" id="imgloadExternalCalendarsView" style="max-width: 20px; max-height: 20px;" />
+                    <div id="frmExternalCalendarsView"></div>
 </div>
 </div>
  </div>

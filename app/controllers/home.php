@@ -38,7 +38,7 @@ class Home extends Controller
         $category_list = array();
         $category_filter_name = _ALL_CATEGORIES;
         $tasks_in_execution = array();
-        if($_SESSION['isLoggedIn'] && strlen($_SESSION["username"])>0)
+        if(isset($_SESSION['isLoggedIn']) && $_SESSION['isLoggedIn'] !="" && strlen($_SESSION["username"])>0)
         {            
             $this->model('User');
             $usr = new User($_SESSION['userid']);

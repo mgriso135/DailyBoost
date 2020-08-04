@@ -7,12 +7,6 @@ require_once('UserExternalApp.php');
 $lang = $_SESSION['language'];
 require_once "assets/User_{$lang}.php"; 
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 /**
  * Description of User
  *
@@ -805,7 +799,7 @@ class User
             if($link === false){
                 die("ERROR: Could not connect. " . mysqli_connect_error());
             }
-            $sql = "SELECT id FROM usersexternalapp WHERE userid = ?";
+            $sql = "SELECT id FROM usersexternalapps WHERE userid = ?";
             if($AppCategory!="")
             {
                 $sql.= " AND ExternalAppType LIKE ?";
@@ -829,6 +823,10 @@ class User
                     array_push($this->external_apps, $curr);
                 }
                 $stmt->close();
+            }
+            else
+            {
+                echo $link->error;
             }
             
             $ret = 1;
@@ -913,6 +911,61 @@ class User
         else
         {
             $ret = 4;
+        }
+        return $ret;
+    }
+    
+    public function getExternalCalendars()
+    {
+        $ret = "";
+        if($this->id !=-1)
+        {
+            $this->loadExternalApps();
+            $ret .= sizeof($this->external_apps) . "<br />";
+            for($i = 0; $i < sizeof($this->external_apps); $i++)
+            {
+                $refresh_token = $this->external_apps[$i]->refresh_token;
+                //$ret .= "Refresh token: " . $refresh_token . "<br />";
+                $client = new Google_Client();
+                $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
+                $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
+                $client->setRedirectUri("https://www.virtualchief.net");
+                $client->setAccessType("offline");
+                $client->setScopes("profile email https://www.googleapis.com/auth/calendar");
+                $client->fetchAccessTokenWithRefreshToken($refresh_token);
+                if(!$client->isAccessTokenExpired())
+                {
+                    $a_tok = $client->getAccessToken();
+                    $service = new Google_Service_Oauth2($client);
+                    $user = $service->userinfo->get();
+                    $ret .= $user->email . "<br />";
+                    //var_dump($a_tok);
+                    
+                    $calService = new Google_Service_Calendar($client);
+                    $calendarList = $calService->calendarList->listCalendarList()->items;
+
+for($i = 0; $i<sizeof($calendarList); $i++)
+{
+    echo $calendarList[$i]->summary . "<br />";
+}
+                    /*$ret .= $calendarList->description ."<br />";
+/*                    while(true) {
+                      foreach ($calendarList->getItems() as $calendarListEntry) {
+                        $ret .= $calendarListEntry;
+                      }
+
+                    }*/
+                }
+                else
+                {
+                    echo " Expired...";
+                }
+                /*
+
+                $this->model('User');
+                $usr = new User($_SESSION['userid']);
+                */
+            }
         }
         return $ret;
     }

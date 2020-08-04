@@ -9,6 +9,7 @@ require_once('../bin/utilities.php');
  */
 class UserExternalApp {
     public $user_id;
+    public $ExternalAppId;
     public $ExternalAppType;
     public $ExternalAppName;
     public $token_type;
@@ -19,7 +20,7 @@ class UserExternalApp {
     public $created;
     public $expires_in;
     
-    public function __construct($user_id=-1, $ExtenalAppType="", $ExternallAppName="")
+    public function __construct($id=-1)
     {
         $this->id=-1;
         $this->user_id=-1;
@@ -32,8 +33,7 @@ class UserExternalApp {
         $this->refresh_token = "";
         $this->created = "";
         $this->expires_in = "";
-        
-        if($user_id !=-1 && $ExternalAppName != "" && $ExternalAppName != "")
+        if($id !=-1)
         {
             $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
             // Check connection
@@ -43,10 +43,10 @@ class UserExternalApp {
 
             $sql = "SELECT id, userid, ExternalAppType, ExternalAppName, token_type, scope, id_token, "
                     . " access_token, refresh_token, created, expires_in "
-                    . "FROM usersexternalapps WHERE userid = ? AND ExternalAppType = ? AND ExternalAppName = ?";
+                    . "FROM usersexternalapps WHERE id = ? ";
             if($stmt = $link->prepare($sql))
             {
-                $stmt->bind_param("iss", $user_id, $ExtenalAppType, $ExternalAppName);
+                $stmt->bind_param("i", $id);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 while($row = $result->fetch_assoc()) {
@@ -64,6 +64,10 @@ class UserExternalApp {
                 }
                 $stmt->close();
                 $ret = 1;
+            }
+            else
+            {
+                echo $link->error;
             }
             mysqli_close($link);
         }

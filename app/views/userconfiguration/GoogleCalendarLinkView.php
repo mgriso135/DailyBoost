@@ -9,6 +9,7 @@
 <script>
     function GoogleCalendarRegisterToken(authResult)
     {
+        alert(authResult['code']);
         $.ajax({ 
              // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
              url: "/dailyboost/public/UserConfigurationController/GoogleCalendarRegisterToken",
@@ -33,26 +34,21 @@
       gapi.load('auth2', function() {
         auth2 = gapi.auth2.init({
           client_id: '<?= AppConfig::$GOOGLE_CLIENT_ID ?>',
-          redirect_uri: '<?= AppConfig::$GOOGLE_REDIRECT_URI ?>',
+          redirect_uri: 'https://www.virtualchief.net',
+          //redirect_uri: 'http://localhost:88',
           // Scopes to request in addition to 'profile' and 'email'
-          //scope: 'additional_scope'
+          scope: 'profile email https://www.googleapis.com/auth/calendar'
         });
       });
-gapi.signin2.render('signinButton', {
-        'scope': 'profile email https://www.googleapis.com/auth/calendar',
-        /*'width': 240,
-        'height': 50,*/
-        'longtitle': false,
-        'theme': 'light',
-        /*'onsuccess': onSuccess,
-        'onfailure': onFailure*/
-      });
-    }
-    
+      }
+
+    $(document).ready(function(){
     $('#signinButton').click(function() {
     // signInCallback defined in step 6.
     auth2.grantOfflineAccess().then(GoogleCalendarRegisterToken);
   });
+  
+    });
          
 </script>
 <!--

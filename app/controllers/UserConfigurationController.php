@@ -16,7 +16,7 @@ class UserConfigurationController extends Controller {
     public function Index()
     {
         $title = "Main app";
-        if($_SESSION['isLoggedIn'] && strlen($_SESSION["username"])>0)
+        if(isset($_SESSION['isLoggedIn']) && strlen($_SESSION["username"])>0)
         {
             $this->model('User');
             $usr = new User($_SESSION['userid']);
@@ -141,34 +141,42 @@ class UserConfigurationController extends Controller {
             if(isset($_POST['code']))
             {
                 $code = $_POST['code'];
-                // create Client Request to access Google API
                 $client = new Google_Client(['client_id' => AppConfig::$GOOGLE_CLIENT_ID]);
                 $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
                 $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
-                $client->setRedirectUri("http://localhost:88");
+                $client->setRedirectUri("https://www.virtualchief.net");
+                //$client->setRedirectUri("http://localhost:88");
                 $client->setAccessType("offline");
+                $client->setScopes("profile email https://www.googleapis.com/auth/calendar");
                 $client->fetchAccessTokenWithAuthCode(urldecode($code));
-                //echo "Expired: " . json_encode($client->isAccessTokenExpired());
                 $this->model('User');
                 $usr = new User($_SESSION['userid']);
-                //echo "\nAccess token: " . json_encode($client->getAccessToken()) . "\n\n" . $client->getRefreshToken();
                 $a_tok = $client->getAccessToken();
-                /*echo "Calendar " . " " . "Google Calendar" . " " . $a_tok['token_type'] . " Scope: " .  
-                        $a_tok['scope'] . " id token: " . $a_tok['id_token'] . " access_token: " . $a_tok['access_token'] . " refresh token: " .  
-                        $a_tok['refresh_token'] . " created: " . $a_tok['created'] . " expires in: " . $a_tok['expires_in'];*/
                 $ret = $usr->addExternalApp("Calendar", "Google Calendar", $a_tok['token_type'], 
                         $a_tok['scope'], $a_tok['id_token'], $a_tok['access_token'], 
                         $a_tok['refresh_token'], $a_tok['created'], $a_tok['expires_in']);
-                /*if ($payload) {
-                    echo "Expired: " . $client->isAccessTokenExpired()."\n";
-                    echo "AT: ". $client->getOAuth2Service()->getRefreshToken() . "\n";
-                  $userid = $payload['sub'];
-                  echo json_encode($payload);
-                  
-                } else {
-                  // Invalid ID token
-                    echo "Invalid ID token";
-                }*/
+
+            }
+        }
+        else 
+        {
+            echo "Token not set";
+        }
+        echo $ret;
+    }
+    
+    public function linkCategoriesToCalendars_View()
+    {
+        $ret = "";
+        if(isset($_SESSION['userid']) && $_SESSION['userid'] != "" && isset($_SESSION['isLoggedIn']))
+        {
+            $this->model('User');
+            $usr = new User($_SESSION['userid']);
+            if($usr->id!=-1)
+            {
+                //$usr->loadConfiguration();
+                $ret1 = $usr->getExternalCalendars();
+                $this->view('/userconfiguration/linkCategoriesToCalendars_View', ['log' => $ret1]);
             }
         }
         else 
