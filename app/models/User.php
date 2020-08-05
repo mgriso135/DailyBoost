@@ -3,7 +3,7 @@ require_once('../bin/utilities.php');
 require_once('Categories.php');
 require_once('AccountModel.php');
 require_once('Task.php');
-require_once('UserExternalApp.php');
+require_once('UserExternalAccount.php');
 $lang = $_SESSION['language'];
 require_once "assets/User_{$lang}.php"; 
 
@@ -42,7 +42,10 @@ class User
     public $tasks;
     public $tasks_planned;
     
-    public $external_apps;
+    public $external_accounts;
+    
+    public $external_available_calendars;
+    
     
     public function __construct($user_id=-1)
     {
@@ -787,9 +790,9 @@ class User
         //return $ret;
     }
     
-    public function loadExternalApps($AppCategory = "")
+    public function loadExternalAccounts($AppCategory = "")
     {
-        $this->external_apps = array();
+        $this->external_accounts = array();
         if($this->id != -1)
         {
             $usrid=$this->id;
@@ -799,10 +802,10 @@ class User
             if($link === false){
                 die("ERROR: Could not connect. " . mysqli_connect_error());
             }
-            $sql = "SELECT id FROM usersexternalapps WHERE userid = ?";
+            $sql = "SELECT id FROM usersexternalaccounts WHERE userid = ?";
             if($AppCategory!="")
             {
-                $sql.= " AND ExternalAppType LIKE ?";
+                $sql.= " AND ExternalAccountType LIKE ?";
             }
             
             if($stmt = $link->prepare($sql))
@@ -819,8 +822,8 @@ class User
                 $stmt->execute();
                 $result = $stmt->get_result();
                 while($row = $result->fetch_assoc()) {
-                    $curr = new UserExternalApp($row['id']);
-                    array_push($this->external_apps, $curr);
+                    $curr = new UserExternalAccount($row['id']);
+                    array_push($this->external_accounts, $curr);
                 }
                 $stmt->close();
             }
@@ -835,7 +838,7 @@ class User
         }
     }
     
-    public function addExternalApp($app_category, $app_name, $account_name, $token_type, $scope, 
+    public function addExternalAccount($app_category, $app_name, $account_name, $token_type, $scope, 
             $id_token, $access_token, $refresh_token, $created, $expires_in)
     {
         $ret = 0;
@@ -848,14 +851,15 @@ class User
             // If it does not exist, add a new one
             // If it exists, update the data
             
-            $this->loadExternalApps($app_category);
-            $found = 0;
-            for($i=0; $i < sizeof($this->external_apps); $i++)
+            $this->loadExternalAccounts($app_category);
+            $extappid=-1;
+            for($i=0; $i < sizeof($this->external_accounts); $i++)
             {
-                if($this->external_apps[$i]->ExternalAppType == $app_category
-                        && $this->external_apps[$i]->ExternalAppName == $app_name)
+                if($this->external_accounts[$i]->ExternalAccountType == $app_category
+                        && $this->external_accounts[$i]->ExternalAccountName == $app_name
+                        && $this->external_accounts[$i]->AccountName == $account_name)
                 {
-                    $found = 1;
+                    $extappid= $this->external_accounts[$i]->ExternalAccountId;
                 }
             }
             
@@ -868,56 +872,79 @@ class User
             
             
 
-            if($found == 0)
+            if($extappid == -1)
             {
-                echo "Inside";
-            $maxid=0;
-            $sql = "SELECT MAX(id) FROM usersexternalapps";
-            if($stmt = $link->prepare($sql))
-            {
-                if($stmt->execute())
+                $maxid=0;
+                $sql = "SELECT MAX(id) FROM usersexternalaccounts";
+                if($stmt = $link->prepare($sql))
                 {
-                    $result = $stmt->get_result();
-                    while($row = $result->fetch_assoc()) {
-                        $maxid = $row['MAX(id)'] + 1;
+                    if($stmt->execute())
+                    {
+                        $result = $stmt->get_result();
+                        while($row = $result->fetch_assoc()) {
+                            $maxid = $row['MAX(id)'] + 1;
+                        }
                     }
+                    else
+                    {
+                        echo $stmt->error;
+                        $maxid=0;
+                    }
+                    $stmt->close();
                 }
                 else
                 {
-                    echo $stmt->error;
-                    $maxid=0;
+                    echo $link->error;
                 }
-                $stmt->close();
-            }
-            else
-            {
-                echo $link->error;
-            }
-            
-            echo $maxid;
-            
-            $sql = "INSERT INTO usersexternalapps(id, userid, ExternalAppType, ExternalAppName, AccountName, "
+
+                $sql = "INSERT INTO usersexternalaccounts(id, userid, ExternalAccountType, ExternalAccountName, AccountName, "
                     . " token_type, scope, id_token, access_token, refresh_token, created, expires_in) "
                     . " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-           if($stmt = $link->prepare($sql))
-           {
-                $stmt->bind_param("iissssssssss", $maxid, $this->id, $app_category, $app_name, $account_name,
-                        $token_type, $scope, $id_token, $access_token, $refresh_token, $created, $expires_in);
-                if($stmt->execute())
+                if($stmt = $link->prepare($sql))
                 {
-                    $ret = 1;
-                }
-                else
-                {
-                    echo $stmt->error;
-                    $ret = 3;
-                }
-                $stmt->close();
+                     $stmt->bind_param("iissssssssss", $maxid, $this->id, $app_category, $app_name, $account_name,
+                             $token_type, $scope, $id_token, $access_token, $refresh_token, $created, $expires_in);
+                     if($stmt->execute())
+                     {
+                         $ret = 1;
+                     }
+                     else
+                     {
+                         echo $stmt->error;
+                         $ret = 3;
+                     }
+                     $stmt->close();
+                 }
+                 else
+                 {
+                     echo $link->error;
+                 }
             }
             else
             {
-                echo $link->error;
-            }
+                // Updates the data
+                $sql = "UPDATE usersexternalaccounts SET ExternalAccountType=?, ExternalAccountName=?, AccountName=?, "
+                    . " token_type=?, scope=?, id_token=?, access_token=?, refresh_token=?, created=?, expires_in=? "
+                    . " WHERE id=?";
+                if($stmt = $link->prepare($sql))
+                {
+                     $stmt->bind_param("ssssssssssi", $app_category, $app_name, $account_name,
+                             $token_type, $scope, $id_token, $access_token, $refresh_token, $created, $expires_in, $extappid);
+                     if($stmt->execute())
+                     {
+                         $ret = 1;
+                     }
+                     else
+                     {
+                         echo $stmt->error;
+                         $ret = 3;
+                     }
+                     $stmt->close();
+                 }
+                 else
+                 {
+                     echo $link->error;
+                 }
             }
             $link->close();
         }
@@ -928,58 +955,47 @@ class User
         return $ret;
     }
     
-    public function getExternalCalendars()
+    public function loadExternalCalendars()
     {
         $ret = "";
+        $this->external_available_calendars = array();
         if($this->id !=-1)
         {
-            $this->loadExternalApps();
-            $ret .= sizeof($this->external_apps) . "<br />";
-            for($i = 0; $i < sizeof($this->external_apps); $i++)
+            $this->loadExternalAccounts();
+            for($i = 0; $i < sizeof($this->external_accounts); $i++)
             {
-                $refresh_token = $this->external_apps[$i]->refresh_token;
-                //$ret .= "Refresh token: " . $refresh_token . "<br />";
-                $client = new Google_Client();
-                $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
-                $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
-                //$client->setRedirectUri("https://www.virtualchief.net");
-                $client->setRedirectUri("http://localhost:88");
-                $client->setAccessType("offline");
-                $client->setScopes("profile email https://www.googleapis.com/auth/calendar");
-                $client->fetchAccessTokenWithRefreshToken($refresh_token);
-                if(!$client->isAccessTokenExpired())
+                $ret .= "Account name: " . $this->external_accounts[$i]->AccountName . "<br />";
+                $refresh_token = $this->external_accounts[$i]->refresh_token;
+                $this->external_accounts[$i]->checkTokenValidity();
+                if($this->external_accounts[$i]->isTokenValid)
                 {
+                    $client = new Google_Client();
+                    $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
+                    $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
+                    //$client->setRedirectUri("https://www.virtualchief.net");
+                    $client->setRedirectUri("http://localhost:88");
+                    $client->setAccessType("offline");
+                    $client->setScopes("profile email https://www.googleapis.com/auth/calendar");
+                    $client->fetchAccessTokenWithRefreshToken($refresh_token);
                     $a_tok = $client->getAccessToken();
                     $service = new Google_Service_Oauth2($client);
                     $user = $service->userinfo->get();
                     $ret .= $user->email . "<br />";
-                    //var_dump($a_tok);
-                    
+
                     $calService = new Google_Service_Calendar($client);
                     $calendarList = $calService->calendarList->listCalendarList()->items;
 
-                    for($i = 0; $i<sizeof($calendarList); $i++)
+                    for($j = 0; $j<sizeof($calendarList); $j++)
                     {
                         //var_dump($calendarList[$i]);
-                        $ret .= $calendarList[$i]->summary . "<br />";
+                        $ret .= "- " . $calendarList[$j]->summary . "<br />";
+                        //var_dump($calendarList[$j]);
+                        $curr = array("ExternalAccount" => $this->external_accounts[$i], 
+                            "ExternalCalendarId" => $calendarList[$j]->id, 
+                            "ExternalCalendarSummary" => $calendarList[$j]->summary);
+                        array_push($this->external_available_calendars, $curr);
                     }
-                    /*$ret .= $calendarList->description ."<br />";
-/*                    while(true) {
-                      foreach ($calendarList->getItems() as $calendarListEntry) {
-                        $ret .= $calendarListEntry;
-                      }
-
-                    }*/
                 }
-                else
-                {
-                    echo " Expired...";
-                }
-                /*
-
-                $this->model('User');
-                $usr = new User($_SESSION['userid']);
-                */
             }
         }
         return $ret;

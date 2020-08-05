@@ -42,3 +42,6 @@ ADD CONSTRAINT `extappid`
 
 ALTER TABLE `dailyboost`.`usersexternalapps` 
 ADD COLUMN `AccountName` VARCHAR(255) NULL AFTER `ExternalAppName`;
+
+ALTER TABLE `dailyboost`.`usersexternalapps` 
+RENAME TO  `dailyboost`.`usersexternalaccounts` ;

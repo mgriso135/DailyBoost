@@ -1,5 +1,6 @@
 <?php
 require_once('../bin/utilities.php');
+require_once('UserExternalAccount.php');
 $lang = $_SESSION['language'];
 
 /*
@@ -22,6 +23,7 @@ class Category {
     public $tasks;
     public $users;
     public $accounts;
+    public $external_calendars;
     
     public function __construct($category_id=-1)
     {
@@ -300,6 +302,78 @@ class Category {
            }
            mysqli_close($link);
            }
+     }
+     
+     public function loadExternalCalendars($userid=-1)
+     {
+         $this->external_calendars = array();
+         if($this->id && $userid != -1)
+         {
+           // Attempt insert query execution
+           $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+           // Check connection
+           if($link === false){
+                die("ERROR: Could not connect. " . mysqli_connect_error());
+           }
+
+            $sql = "SELECT id, userid, categoryid, externalappid, calendarid FROM categoriesusers WHERE categoryid = ?";
+            if($stmt = $link->prepare($sql))
+            {
+                 $stmt->bind_param("i", $this->id);
+                 $stmt->execute();
+                 $result = $stmt->get_result();
+                     while($row = $result->fetch_assoc()) {
+                         $curr = new UserExternalCalendar($row['userid'], $row['externalappid'], $row['calendarid']);
+                         array_push($this->external_calendars, $curr);
+                     }
+                 $stmt->close();
+             }
+            mysqli_close($link);
+           }
+     }
+     
+     public function addExternalCalendar($user_id, $external_account_id, $external_calendar_id)
+     {
+         $ret = 0;
+         // Attempt insert query execution
+        $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+        // Check connection
+        if($link === false){
+           die("ERROR: Could not connect. " . mysqli_connect_error());
+        }
+       
+        $max=0;
+        // Get max id value
+        $sql = "SELECT MAX(id) FROM externalcalendarsuserscategories";
+        if($stmt = $link->prepare($sql))
+        {          
+            $stmt->execute();
+            $result = $stmt->get_result();
+            while($row = $result->fetch_assoc()) {
+                 $max = $row['MAX(id)'] + 1;
+            }
+            $stmt->close();
+        }
+        $link->begin_transaction();
+        try
+        {
+            $sql = "INSERT INTO externalcalendarsuserscategories(id, userid, categoryid, externalappid, calendarid) "
+                . "VALUES(?,?,?,?,?)"; 
+            $stmt = $link->prepare($sql);
+
+            $stmt->bind_param("iiiis", $max, $user_id, $this->id, $external_account_id, $external_calendar_id);
+            $stmt->execute();
+            $stmt->close();
+            $ret = 1;
+            $link->commit();
+            
+        } catch (Exception $ex) {
+            $link->rollback();
+            $ret = -1;
+        }
+                
+        mysqli_close($link);
+        return $ret;
      }
 }
 

@@ -1,6 +1,6 @@
   <?php
     $lang = $_SESSION['language'];
-    require_once "assets/UserExternalAppsList_{$lang}.php"; 
+    require_once "assets/UserExternalAccountsList_{$lang}.php"; 
     ?>
 
 
@@ -17,12 +17,12 @@ Apps list:<br />
     </thead>
     <tbody>
         <?php
-        $apps = $data['apps'];
+        $apps = $data['accounts'];
         for($i = 0; $i < sizeof($apps); $i++)
         { ?>
         <tr>
-            <td><?= $apps[$i]->ExternalAppType ?></td>
-            <td><?= $apps[$i]->ExternalAppName ?></td>
+            <td><?= $apps[$i]->ExternalAccountType ?></td>
+            <td><?= $apps[$i]->ExternalAccountName ?></td>
             <td><?= $apps[$i]->AccountName ?></td>
             <td><?php 
                 if($apps[$i]->isTokenValid == true)
@@ -41,4 +41,3 @@ Apps list:<br />
         ?>
     </tbody>
 </table>
-<?= var_dump($data['apps']) ?>

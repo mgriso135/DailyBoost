@@ -155,7 +155,7 @@ class UserConfigurationController extends Controller {
                 $service = new Google_Service_Oauth2($client);
                 $account = $service->userinfo->get();
                 $account_name = $account->email;
-                $ret = $usr->addExternalApp("Calendar", "Google Calendar", $account_name, $a_tok['token_type'], 
+                $ret = $usr->addExternalAccount("Calendar", "Google Calendar", $account_name, $a_tok['token_type'], 
                         $a_tok['scope'], $a_tok['id_token'], $a_tok['access_token'], 
                         $a_tok['refresh_token'], $a_tok['created'], $a_tok['expires_in']);
 
@@ -178,8 +178,10 @@ class UserConfigurationController extends Controller {
             if($usr->id!=-1)
             {
                 //$usr->loadConfiguration();
-                $ret1 = $usr->getExternalCalendars();
-                $this->view('/userconfiguration/linkCategoriesToCalendars_View', ['log' => $ret1]);
+                $ret1 = $usr->loadExternalCalendars();
+                            $usr->loadCategories();
+                $this->view('/userconfiguration/linkCategoriesToCalendars_View', ['categories' => $usr->categories, 
+                    'availablecalendars' => $usr->external_available_calendars]);
             }
         }
         else 
@@ -189,9 +191,8 @@ class UserConfigurationController extends Controller {
         echo $ret;
     }
     
-    public function listExternalApps()
+    public function listExternalAccounts()
     {
-
         $categoryId = "";
         $appslist = array();
         if(isset($_SESSION['userid']) && $_SESSION['userid'] != "" && isset($_SESSION['isLoggedIn']))
@@ -205,12 +206,12 @@ class UserConfigurationController extends Controller {
             $usr = new User($_SESSION['userid']);
             if($usr->id != -1)
             {
-                $usr->loadExternalApps($categoryId);
-                for($i = 0; $i < sizeof($usr->external_apps); $i++)
+                $usr->loadExternalAccounts($categoryId);
+                for($i = 0; $i < sizeof($usr->external_accounts); $i++)
                 {
-                    $usr->external_apps[$i]->checkTokenValidity();
+                    $usr->external_accounts[$i]->checkTokenValidity();
                 }
-                $this->view('/userconfiguration/UserExternalAppsList', ['apps' => $usr->external_apps]);
+                $this->view('/userconfiguration/UserExternalAccountsList', ['accounts' => $usr->external_accounts]);
             }
         }
         return $appslist;

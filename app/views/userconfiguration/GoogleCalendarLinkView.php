@@ -32,9 +32,9 @@
     function start() {
       gapi.load('auth2', function() {
         auth2 = gapi.auth2.init({
-          client_id: '<?= AppConfig::$GOOGLE_CLIENT_ID ?>',
-          //redirect_uri: 'https://www.virtualchief.net',
-          redirect_uri: 'http://localhost:88',
+          client_id: "<?= AppConfig::$GOOGLE_CLIENT_ID ?>",
+          redirect_uri: 'https://www.virtualchief.net',
+          //redirect_uri: "http://localhost:88",
           // Scopes to request in addition to 'profile' and 'email'
           scope: 'profile email https://www.googleapis.com/auth/calendar'
         });
