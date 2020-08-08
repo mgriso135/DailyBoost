@@ -45,3 +45,6 @@ ADD COLUMN `AccountName` VARCHAR(255) NULL AFTER `ExternalAppName`;
 
 ALTER TABLE `dailyboost`.`usersexternalapps` 
 RENAME TO  `dailyboost`.`usersexternalaccounts` ;
+
+ALTER TABLE `dailyboost`.`externalcalendarsuserscategories` 
+ADD COLUMN `calendarname` VARCHAR(255) NULL AFTER `calendarid`;

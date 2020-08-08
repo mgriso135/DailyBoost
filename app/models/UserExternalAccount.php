@@ -114,6 +114,7 @@ class UserExternalCalendar
     public $external_account_id;
     public $user_id;
     public $calendar_id;
+    public $calendar_name;
     public $categories;
     public $external_account;
     
@@ -123,7 +124,7 @@ class UserExternalCalendar
         $this->calendar_id = -1;
         $this->external_account_id = -1;
         $this->categories = array();
-        if($accountid!=-1 && $calendarid!=-1 && $userid!=-1)
+        if($extaccountid!=-1 && $calendarid!=-1 && $userid!=-1)
         {
             $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
             // Check connection
@@ -131,18 +132,20 @@ class UserExternalCalendar
                             die("ERROR: Could not connect. " . mysqli_connect_error());
             }
 
-            $sql = "SELECT id, userid, categoryid, externalappid, calendarid FROM externalcalendarsuserscategories";
+            $sql = "SELECT id, userid, categoryid, externalaccountid, calendarid, calendarname FROM externalcalendarsuserscategories "
+                    . " WHERE userid=? AND externalaccountid=? AND calendarid=?";
             if($stmt = $link->prepare($sql))
             {
-                $stmt->bind_param("iiii", $id);
+                $stmt->bind_param("iis", $userid, $extaccountid, $calendarid);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 while($row = $result->fetch_assoc()) {
                     $this->id = $row['id'];
-                    $this->external_account_id = $row['externalappid'];
+                    $this->external_account_id = $row['externalaccountid'];
                     $this->user_id = $row['userid'];
                     $this->calendar_id = $row['calendarid'];
-                    $this->external_account = new UserExternalAccount($row['externalappid']);
+                    $this->calendar_name = $row['calendarname'];
+                    $this->external_account = new UserExternalAccount($row['externalaccountid']);
                 }
                 $stmt->close();
                 $ret = 1;
@@ -161,7 +164,7 @@ class UserExternalCalendar
                             die("ERROR: Could not connect. " . mysqli_connect_error());
             }
 
-            $sql = "SELECT id, userid, categoryid, externalappid, calendarid, categoryid FROM externalcalendarsuserscategories";
+            $sql = "SELECT id, userid, categoryid, externalappid, calendarid, categoryid, calendarname FROM externalcalendarsuserscategories";
             if($stmt = $link->prepare($sql))
             {
                 $stmt->bind_param("iiiii", $id);
@@ -172,6 +175,7 @@ class UserExternalCalendar
                     $this->external_account_id = $row['externalappid'];
                     $this->user_id = $row['userid'];
                     $this->calendar_id = $row['calendarid'];
+                    $this->calendar_name = $row['calendarname'];
                     array_push($this->categories, new Category($row['categoryid']));
                 }
                 $stmt->close();
