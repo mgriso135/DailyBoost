@@ -48,6 +48,8 @@ class Task {
     
     public $notes;
     
+    public $external_tasks;
+    
     public function __construct($taskid=-1)
     {
         $this->categories = array();
@@ -1179,5 +1181,121 @@ class Task {
             $ret = -1;
         }
         return $ret;
+    }
+    
+    public function loadExternalTasks($externalcalendarid=-1)
+    {
+        $this->external_tasks = array();
+        if($this->id != -1)
+        {
+             $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+                // Check connection
+                if($link === false){
+                    die("ERROR: Could not connect. " . mysqli_connect_error());
+                }
+                $sql = "SELECT id FROM externalcalendartask WHERE internaltaskid=?";
+                if($externalcalendarid!=-1)
+                {
+                    $sql .= " AND externalcalendarid=?";
+                }
+                
+                if($stmt = $link->prepare($sql))
+                {
+                   if($externalcalendarid!=-1)
+                {
+                       $stmt->bind_param("ii", $this->id, $externalcalendarid);
+                   }
+                   else
+                   {
+                    $stmt->bind_param("i", $this->id);
+                   }
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    while($row = $result->fetch_assoc()) {
+                        $curr = new ExternalTask($row['id']);
+                        array_push($this->external_tasks, $curr);
+                    }
+                    $stmt->close();
+                }
+                mysqli_close($link);
+        }
+    }
+   
+    /* Returns:
+     * 0 if generic error
+     * 1 if everything is ok
+     * 
+     */
+    public function WriteTaskToExternalCalendars()
+    {
+        if($this->id != -1)
+        {
+            // Checks all external calendars for the category of the task
+            $this->loadCategories();
+            foreach($this->categories as $cat)
+            {
+                $cat->loadExternalCalendars();
+                foreach($cat->external_calendars as $extcal)
+                {
+                    // Checks if the current task is already in the calendar
+                    $this->loadExternalTasks($extcal->id);
+                    if(sizeof($this->external_tasks) > 0)
+                    {
+                        // Updates the task
+                    }
+                    else
+                    {
+                        // Creates the external task
+                    }
+                }
+            }
+        }
+    }
+    
+}
+
+class ExternalTask
+{
+    public $id;
+    public $userid;
+    public $categoryid;
+    public $externalcalendarid;
+    public $externaltaskid;
+    public $internaltaskid;
+    
+    public function __construct($id=-1)
+    {
+        $this->id = -1;
+        $this->userid = -1;
+        $this->categoryid = -1;
+        $this->externalcalendarid = -1;
+        $this->externaltaskid = -1;
+        $this->internaltaskid = -1;
+        
+        if($id != -1)
+        {
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+                // Check connection
+                if($link === false){
+                    die("ERROR: Could not connect. " . mysqli_connect_error());
+                }
+                $sql = "SELECT id, userid, categoryid, externalcalendarid, externaltaskid, internaltaskid FROM externalcalendartask WHERE id=?";
+                if($stmt = $link->prepare($sql))
+                {
+                    $stmt->bind_param("i", $id);
+                    $stmt->execute();
+                    $result = $stmt->get_result();
+                    while($row = $result->fetch_assoc()) {
+                        $this->id = $row['id'];
+                        $this->userid = $row['userid'];
+                        $this->categoryid = $row['categoryid'];
+                        $this->externalcalendarid = $row['externalcalendarid'];
+                        $this->externaltaskid = $row['externaltaskid'];
+                        $this->internaltaskid = $row['internaltaskid'];
+                    }
+                    $stmt->close();
+                }
+                mysqli_close($link);
+        }
     }
 }

@@ -155,7 +155,7 @@ class UserConfigurationController extends Controller {
                 $service = new Google_Service_Oauth2($client);
                 $account = $service->userinfo->get();
                 $account_name = $account->email;
-                $ret = $usr->addExternalAccount("Calendar", "Google Calendar", $account_name, $a_tok['token_type'], 
+                $ret = $usr->addExternalAccount("Google", "Google Calendar", $account_name, $a_tok['token_type'], 
                         $a_tok['scope'], $a_tok['id_token'], $a_tok['access_token'], 
                         $a_tok['refresh_token'], $a_tok['created'], $a_tok['expires_in']);
 

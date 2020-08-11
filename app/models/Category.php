@@ -316,7 +316,7 @@ class Category {
                 die("ERROR: Could not connect. " . mysqli_connect_error());
            }
 
-            $sql = "SELECT id, userid, categoryid, externalaccountid, calendarid FROM externalcalendarsuserscategories WHERE categoryid = ?";
+            $sql = "SELECT id, userid, categoryid, calendartype, externalaccountid, calendarid FROM externalcalendarsuserscategories WHERE categoryid = ?";
             if($userid!=-1)
             {
                 $sql.= " AND userid = ?";
@@ -335,7 +335,7 @@ class Category {
                  {
                  $result = $stmt->get_result();
                      while($row = $result->fetch_assoc()) {
-                         $curr = new UserExternalCalendar($row['userid'], $row['externalaccountid'], $row['calendarid']);
+                         $curr = new UserExternalCalendar($row['userid'], $row['externalaccountid'], $row['calendartype'], $row['calendarid']);
                          array_push($this->external_calendars, $curr);
                      }
                  }
@@ -353,7 +353,7 @@ class Category {
            }
      }
      
-     public function addExternalCalendar($user_id, $external_account_id, $external_calendar_id, $external_calendar_name)
+     public function addExternalCalendar($user_id, $external_account_id, $calendar_type, $external_calendar_id, $external_calendar_name)
      {
          $ret = 0;
          // Attempt insert query execution
@@ -378,11 +378,11 @@ class Category {
         $link->begin_transaction();
         try
         {
-            $sql = "INSERT INTO externalcalendarsuserscategories(id, userid, categoryid, externalaccountid, calendarid, calendarname) "
-                . "VALUES(?,?,?,?,?,?)"; 
+            $sql = "INSERT INTO externalcalendarsuserscategories(id, userid, categoryid, externalaccountid, calendarid, calendarname, calendartype) "
+                . "VALUES(?,?,?,?,?,?,?)"; 
             if($stmt = $link->prepare($sql))
             {
-                $stmt->bind_param("iiiiss", $max, $user_id, $this->id, $external_account_id, $external_calendar_id, $external_calendar_name);
+                $stmt->bind_param("iiiisss", $max, $user_id, $this->id, $external_account_id, $external_calendar_id, $external_calendar_name, $calendar_type);
                 $stmt->execute();
                 $stmt->close();
                 $ret = 1;
@@ -399,6 +399,45 @@ class Category {
         }
                 
         mysqli_close($link);
+        return $ret;
+     }
+     
+     public function deleteExternalCalendar($id)
+     {
+         $ret = 0;         
+         if($this->id != -1 && isset($_SESSION['userid']) && $_SESSION['userid'] != "")
+         {
+             $user_id = $_SESSION['userid'];
+            // Attempt insert query execution
+           $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+           // Check connection
+           if($link === false){
+              die("ERROR: Could not connect. " . mysqli_connect_error());
+           }
+           $link->begin_transaction();
+           try
+           {
+               $sql = "DELETE FROM externalcalendarsuserscategories WHERE id=? AND categoryid=? AND userid=?"; 
+               if($stmt = $link->prepare($sql))
+               {
+                   $stmt->bind_param("iii", $id, $this->id, $user_id);
+                   $stmt->execute();
+                   $stmt->close();
+                   $ret = 1;
+                   $link->commit();
+               }
+               else
+               {
+                   echo "ERROR " . $link->error;
+               }
+
+           } catch (Exception $ex) {
+               $link->rollback();
+               $ret = -1;
+           }
+
+           mysqli_close($link);
+         }
         return $ret;
      }
 }

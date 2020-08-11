@@ -46,7 +46,7 @@ class UserExternalAccount {
                             die("ERROR: Could not connect. " . mysqli_connect_error());
             }
 
-            $sql = "SELECT id, userid, ExternalAppType, ExternalAppName, AccountName, token_type, scope, id_token, "
+            $sql = "SELECT id, userid, ExternalAccountType, ExternalAccountName, AccountName, token_type, scope, id_token, "
                     . " access_token, refresh_token, created, expires_in "
                     . "FROM usersexternalaccounts WHERE id = ? ";
             if($stmt = $link->prepare($sql))
@@ -57,8 +57,8 @@ class UserExternalAccount {
                 while($row = $result->fetch_assoc()) {
                     $this->ExternalAccountId= $row["id"];
                     $this->user_id= $row["userid"];
-                    $this->ExternalAccountType = $row["ExternalAppType"];
-                    $this->ExternalAccountName = $row["ExternalAppName"];
+                    $this->ExternalAccountType = $row["ExternalAccountType"];
+                    $this->ExternalAccountName = $row["ExternalAccountName"];
                     $this->AccountName = $row["AccountName"];
                     $this->token_type = $row["token_type"];
                     $this->scope = $row["scope"];
@@ -111,14 +111,16 @@ class UserExternalAccount {
 
 class UserExternalCalendar
 {
+    public $id;
     public $external_account_id;
     public $user_id;
+    public $calendar_type;
     public $calendar_id;
     public $calendar_name;
     public $categories;
     public $external_account;
     
-    public function __construct($userid=-1, $extaccountid=-1, $calendarid=-1)
+    public function __construct($userid=-1, $extaccountid=-1, $calendartype="", $calendarid=-1)
     {
         $this->user_id = -1;
         $this->calendar_id = -1;
@@ -132,11 +134,11 @@ class UserExternalCalendar
                             die("ERROR: Could not connect. " . mysqli_connect_error());
             }
 
-            $sql = "SELECT id, userid, categoryid, externalaccountid, calendarid, calendarname FROM externalcalendarsuserscategories "
-                    . " WHERE userid=? AND externalaccountid=? AND calendarid=?";
+            $sql = "SELECT id, userid, categoryid, externalaccountid, calendarid, calendarname, calendartype FROM externalcalendarsuserscategories "
+                    . " WHERE userid=? AND externalaccountid=? AND calendarid=? AND calendartype=?";
             if($stmt = $link->prepare($sql))
             {
-                $stmt->bind_param("iis", $userid, $extaccountid, $calendarid);
+                $stmt->bind_param("iiss", $userid, $extaccountid, $calendarid, $calendartype);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 while($row = $result->fetch_assoc()) {
@@ -146,6 +148,7 @@ class UserExternalCalendar
                     $this->calendar_id = $row['calendarid'];
                     $this->calendar_name = $row['calendarname'];
                     $this->external_account = new UserExternalAccount($row['externalaccountid']);
+                    $this->calendar_type = $row['calendartype'];
                 }
                 $stmt->close();
                 $ret = 1;
@@ -164,7 +167,7 @@ class UserExternalCalendar
                             die("ERROR: Could not connect. " . mysqli_connect_error());
             }
 
-            $sql = "SELECT id, userid, categoryid, externalappid, calendarid, categoryid, calendarname FROM externalcalendarsuserscategories";
+            $sql = "SELECT id, userid, categoryid, externalappid, calendarid, categoryid, calendarname, calendartype FROM externalcalendarsuserscategories";
             if($stmt = $link->prepare($sql))
             {
                 $stmt->bind_param("iiiii", $id);
@@ -176,6 +179,7 @@ class UserExternalCalendar
                     $this->user_id = $row['userid'];
                     $this->calendar_id = $row['calendarid'];
                     $this->calendar_name = $row['calendarname'];
+                    $this->calendar_type = $row['calendartype'];
                     array_push($this->categories, new Category($row['categoryid']));
                 }
                 $stmt->close();
@@ -183,4 +187,6 @@ class UserExternalCalendar
             }
         }
     }
+    
 }
+

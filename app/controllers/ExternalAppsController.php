@@ -31,7 +31,17 @@ class ExternalAppsController extends Controller {
                     && isset($_POST['externalcalendarid']) && $_POST['externalcalendarid'] != "")
             {
                 $catId = $_POST['categoryid'];
+                $this->model('UserExternalAccount');
                 $externalAccountId = $_POST['externalAccountId'];
+                $extacc = new UserExternalAccount($externalAccountId);
+                
+                $calendarType="Google Calendar";
+                switch($extacc->ExternalAccountName)
+                {
+                    case "Google" : $calendarType="Google Calendar";break;
+                    case "Microsoft": $calendarType="Microsoft Outlook";break;
+                    case "Apple": $calendarType="Apple Calendar";break;
+                }
                 $externalcalendarid = $_POST['externalcalendarid'];
                 $externalcalendarname = $_POST['externalcalendarname'];
                 $this->model('User');
@@ -67,7 +77,7 @@ class ExternalAppsController extends Controller {
                         if($foundCalendar == false)
                         {
                             // Let's add the calendar
-                            $ret = $cat->addExternalCalendar($usr->id, $externalAccountId, $externalcalendarid, $externalcalendarname);
+                            $ret = $cat->addExternalCalendar($usr->id, $externalAccountId, $calendarType, $externalcalendarid, $externalcalendarname);
                         }
                         else
                         {
@@ -125,7 +135,6 @@ class ExternalAppsController extends Controller {
                         if($foundCat == true)
                         {
                             $cat->loadExternalCalendars($usr->id);
-                            echo json_decode($cat->external_calendars);
                             $ret = $cat->external_calendars;
                         }
                         else
@@ -148,4 +157,41 @@ class ExternalAppsController extends Controller {
         echo json_encode($ret);
     }
     
+    /* Returns:
+     * 1 if deleted ok
+     * 2 if user not found
+     * 3 if category not found
+     * 4 if user does not hace access to the specified category
+     */
+    public function deleteExternalCalendarFromCategory()
+    {
+        $ret = 0;
+        if(isset($_SESSION['userid']) && $_SESSION['userid'] != "" && isset($_SESSION['isLoggedIn']))
+        {
+            if(isset($_POST['id']) && $_POST['id'] >= 0
+                    && isset($_POST['category_id']) && $_POST['category_id'] >= 0)
+            {
+                $cal_id = $_POST['id'];
+                $category_id = $_POST['category_id'];
+                echo $category_id. " " . $cal_id . " ";
+                $this->model('Category');
+                $cat = new Category($category_id);
+                if($cat->id!=-1 && $cal_id >= 0)
+                {
+                    echo "Inside";
+                    $ret = $cat->deleteExternalCalendar($cal_id);
+                }
+                else
+                {
+                    $ret = 3;
+                }
+            }
+        }
+        else
+        {
+            $ret = 2;
+        }
+        echo $ret;
+    }
+            
 }
