@@ -110,7 +110,8 @@ class User
                 " FROM users WHERE enabled = true AND username LIKE ? AND password = ?";
        if($stmt = $link->prepare($sql))
        {
-           $encryptedpass = md5($password);
+           $pass2 = $password;
+           $encryptedpass = md5($pass2);
         $stmt->bind_param("ss", $username, $encryptedpass);
         $stmt->execute();
         $result = $stmt->get_result();

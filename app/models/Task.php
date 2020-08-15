@@ -3,6 +3,7 @@ require_once 'User.php';
 require_once 'Category.php';
 require_once 'TaskEvent.php';
 require_once 'TaskNote.php';
+require_once 'UserExternalAccount.php';
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -1228,6 +1229,7 @@ class Task {
      */
     public function WriteTaskToExternalCalendars()
     {
+        $ret = 0;
         if($this->id != -1)
         {
             // Checks all external calendars for the category of the task
@@ -1246,10 +1248,159 @@ class Task {
                     else
                     {
                         // Creates the external task
+                        if($extcal->calendar_type == "Google Calendar")
+                        {
+                            $ret = $this->WriteTaskToExternalCalendars_Google($extcal, $cat->id);
+                        }
                     }
                 }
             }
         }
+        return $ret;
+    }
+    
+    /* Returns: 
+     * 0 if generic error
+     * 1 if everything is ok
+     * 2 if token not valid
+     */
+    private function WriteTaskToExternalCalendars_Google($calendar, $category_id)
+    {
+        $ret =0;
+        $calendar->external_account->checkTokenValidity();
+        if($calendar->external_account->isTokenValid)
+        {
+
+            $util = new utilities();
+            $client = $util->getGoogleClient();
+                $client->setScopes($calendar->external_account->scope);//"profile email https://www.googleapis.com/auth/calendar");
+                $client->fetchAccessTokenWithRefreshToken($calendar->external_account->refresh_token);
+                $a_tok = $client->getAccessToken();
+                $service = new Google_Service_Oauth2($client);
+                $user = $service->userinfo->get();
+                $calService = new Google_Service_Calendar($client);
+                $calendarList = $calService->calendarList->listCalendarList()->items;
+
+
+                $timezone = 'GMT';
+                if(isset($_SESSION['userid']) && $_SESSION['userid'] != "")
+                {
+                    $usr = new User($_SESSION['userid']);
+                    if(isset($usr) && $usr->id > -1)
+                    {
+                        $usr->loadConfiguration();
+                        $timezone = $usr->timezone;
+                    }
+                }
+                
+       
+                $sdate = new DateTime($this->earlystart, new DateTimeZone('GMT'));
+                $edate = new DateTime($this->latefinish, new DateTimeZone('GMT'));
+               $strdate_start = $sdate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
+               $strdate_end = $edate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
+  
+                $event = new Google_Service_Calendar_Event(array(
+                    'summary' => $this->name,
+                    //'location' => '800 Howard St., San Francisco, CA 94103',
+                    'description' => $this->description,
+                    'start' => array(
+                      'dateTime' => $strdate_start,
+                      'timeZone' => $timezone,
+                    ),
+                    'end' => array(
+                      'dateTime' => $strdate_end, 
+                      'timeZone' => $timezone, 
+                    ),
+                    /*'recurrence' => array(
+                      'RRULE:FREQ=DAILY;COUNT=2'
+                    ),*/
+                    /*'attendees' => array(
+                      array('email' => 'lpage@example.com'),
+                      array('email' => 'sbrin@example.com'),
+                    ),*/
+                    'reminders' => array(
+                      'useDefault' => FALSE,
+                      'overrides' => array(
+                        array('method' => 'email', 'minutes' => 60),
+                        array('method' => 'popup', 'minutes' => 10),
+                      ),
+                    ),
+                  ));
+
+                  $calendarId = $calendar->calendar_name;//'primary';
+                  $event2 = $calService->events->insert($calendarId, $event);
+                  //var_dump($event2);
+                  
+                  echo "\nEvent id: " . $event2->id . "\n";
+                  
+                  // Write to database
+                  $this->WriteExternalTaskToDatabase($category_id, $calendar->id, $this->id, $event2->id);
+                  
+                  $ret = 1;
+        }
+        else
+        {
+            $ret = 2;
+        }
+        
+        return $ret;
+    }
+    
+    private function WriteExternalTaskToDatabase($categoryid, $externalcalendarid, $internaltaskid, $externaltaskid)
+    {
+        $ret = 0;
+        // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+            
+            $sql = "SELECT MAX(id) FROM externalcalendartask";
+            if($stmt = $link->prepare($sql))
+            {
+                if($stmt->execute())
+                {
+                    $result = $stmt->get_result();
+                    while($row = $result->fetch_assoc()) {
+                        $maxid = $row['MAX(id)'] + 1;
+                    }
+                }
+                else
+                {
+                    echo $stmt->error;
+                    $maxid=0;
+                }
+                $stmt->close();
+            }
+            else
+            {
+                echo $link->error;
+            }
+
+            $sql = "INSERT INTO externalcalendartask(id, categoryid, externalcalendarid, internaltaskid, externaltaskid) "
+                . " VALUES (?,?,?,?,?)";
+            if($stmt = $link->prepare($sql))
+            {
+                 $stmt->bind_param("iiiis", $maxid, $categoryid, $externalcalendarid, $internaltaskid, $externaltaskid);
+                 if($stmt->execute())
+                 {
+                     $ret = 1;
+                 }
+                 else
+                 {
+                     echo $stmt->error;
+                     $ret = 3;
+                 }
+                 $stmt->close();
+             }
+             else
+             {
+                 echo $link->error;
+             }
+            
+        return $ret;
+        
     }
     
 }
@@ -1257,20 +1408,20 @@ class Task {
 class ExternalTask
 {
     public $id;
-    public $userid;
     public $categoryid;
     public $externalcalendarid;
     public $externaltaskid;
     public $internaltaskid;
+    public $calendartype;
     
     public function __construct($id=-1)
     {
         $this->id = -1;
-        $this->userid = -1;
         $this->categoryid = -1;
         $this->externalcalendarid = -1;
         $this->externaltaskid = -1;
         $this->internaltaskid = -1;
+        $this->calendartype = -1;
         
         if($id != -1)
         {
@@ -1279,7 +1430,11 @@ class ExternalTask
                 if($link === false){
                     die("ERROR: Could not connect. " . mysqli_connect_error());
                 }
-                $sql = "SELECT id, userid, categoryid, externalcalendarid, externaltaskid, internaltaskid FROM externalcalendartask WHERE id=?";
+                $sql = "SELECT externalcalendartask.id, externalcalendartask.userid, externalcalendartask.categoryid, "
+                        ." externalcalendarid, externaltaskid, internaltaskid, " 
+                        ." externalcalendarscategories.calendartype "
+                        ." FROM externalcalendartask INNER JOIN externalcalendarscategories ON "
+                        ." (externalcalendartask.externalcalendarid = externalcalendarscategories.id) WHERE id=?";
                 if($stmt = $link->prepare($sql))
                 {
                     $stmt->bind_param("i", $id);
@@ -1287,11 +1442,11 @@ class ExternalTask
                     $result = $stmt->get_result();
                     while($row = $result->fetch_assoc()) {
                         $this->id = $row['id'];
-                        $this->userid = $row['userid'];
                         $this->categoryid = $row['categoryid'];
                         $this->externalcalendarid = $row['externalcalendarid'];
                         $this->externaltaskid = $row['externaltaskid'];
                         $this->internaltaskid = $row['internaltaskid'];
+                        $this->calendartype = $row['calendartype'];
                     }
                     $stmt->close();
                 }

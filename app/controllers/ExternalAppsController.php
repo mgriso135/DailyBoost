@@ -1,5 +1,6 @@
 <?php
 require_once("../bin/utilities.php");
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
@@ -193,5 +194,28 @@ class ExternalAppsController extends Controller {
         }
         echo $ret;
     }
+    
+    public function pushTaskToExternalCalendars()
+    {
+        $ret = 0;
+        if(isset($_SESSION['userid']) && $_SESSION['userid'] != "")
+        {
+            if(isset($_POST['taskid']) && $_POST['taskid'] >=0)
+            {
+                $tskid = $_POST['taskid'];
+                $this->model('Task');
+                $tsk = new Task($tskid);
+                if($tsk->id >= 0)
+                {
+                    $ret = $tsk->WriteTaskToExternalCalendars();
+                }
+            }
+        }
+        else
+        {
             
+        }
+        echo $ret;
+    }
+    
 }

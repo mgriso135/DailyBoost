@@ -7,6 +7,31 @@
 
 <meta name="google-signin-client_id" content="<?= AppConfig::$GOOGLE_CLIENT_ID ?>">
 <script>
+    var GoogleScope = "profile email https://www.googleapis.com/auth/calendar";
+    var MicrosoftScope = "";
+    
+    <?php
+    $accs = $data['external_accounts'];
+    foreach($accs as $acc)
+    {
+        switch($acc->ExternalAccountType)
+        {
+            case "Google":
+                if (strpos($acc->scope, "https://www.googleapis.com/auth/calendar") !== false) { 
+                    echo "GoogleScope = '" . $acc->scope . "';console.log('Inside if');";
+                }
+                else
+                {
+                    echo "GoogleScope = '" . $acc->scope . " https://www.googleapis.com/auth/calendar';;console.log('Inside else');";
+                }
+                break;
+            default: break;
+        }
+    }
+    ?>
+    
+    console.log("GoogleScope: " + GoogleScope);
+    
     function GoogleCalendarRegisterToken(authResult)
     {
         $.ajax({ 
@@ -36,7 +61,7 @@
           redirect_uri: 'https://www.virtualchief.net',
           //redirect_uri: "http://localhost:88",
           // Scopes to request in addition to 'profile' and 'email'
-          scope: 'profile email https://www.googleapis.com/auth/calendar'
+          scope: GoogleScope //'profile email https://www.googleapis.com/auth/calendar'
         });
       });
       }

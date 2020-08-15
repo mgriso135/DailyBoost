@@ -126,8 +126,11 @@ class UserConfigurationController extends Controller {
             $usr = new User($_SESSION['userid']);
             if($usr->id!=-1)
             {
-                $usr->loadConfiguration();
-                $this->view('/userconfiguration/GoogleCalendarLinkView');
+                //$usr->loadConfiguration();
+                $usr->loadExternalAccounts();
+                $ext_accounts = array();
+                $ext_accounts = $usr->external_accounts;
+                $this->view('/userconfiguration/GoogleCalendarLinkView', ['external_accounts' => $ext_accounts]);
             }
         }
         else{

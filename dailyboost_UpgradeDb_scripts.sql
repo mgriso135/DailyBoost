@@ -123,3 +123,27 @@ ADD CONSTRAINT `extcal_calext_fk1`
   REFERENCES `dailyboost`.`externalcalendarsuserscategories` (`id`)
   ON DELETE NO ACTION
   ON UPDATE NO ACTION;
+
+ALTER TABLE `dailyboost`.`externalcalendarsuserscategories` 
+DROP FOREIGN KEY `extuser_fk1`;
+ALTER TABLE `dailyboost`.`externalcalendarsuserscategories` 
+DROP COLUMN `userid`,
+DROP PRIMARY KEY,
+ADD PRIMARY KEY (`id`, `categoryid`, `calendartype`, `externalaccountid`, `calendarid`),
+DROP INDEX `extuser_fk1_idx` ;
+
+ALTER TABLE `dailyboost`.`externalcalendarsuserscategories` 
+RENAME TO  `dailyboost`.`externalcalendarscategories` ;
+
+ALTER TABLE `dailyboost`.`externalcalendartask` 
+DROP FOREIGN KEY `extcal_categoriesusers_fk1`;
+ALTER TABLE `dailyboost`.`externalcalendartask` 
+DROP COLUMN `userid`,
+DROP INDEX `extcal_task_fk2_idx` ,
+ADD INDEX `extcal_task_fk2_idx` (`categoryid` ASC) VISIBLE;
+;
+ALTER TABLE `dailyboost`.`externalcalendartask` 
+ADD CONSTRAINT `extcal_categoriesusers_fk1`
+  FOREIGN KEY (`categoryid`)
+  REFERENCES `dailyboost`.`categoriesusers` (`idcategory`);
+

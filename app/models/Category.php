@@ -316,11 +316,18 @@ class Category {
                 die("ERROR: Could not connect. " . mysqli_connect_error());
            }
 
-            $sql = "SELECT id, userid, categoryid, calendartype, externalaccountid, calendarid FROM externalcalendarsuserscategories WHERE categoryid = ?";
+            $sql = "SELECT externalcalendarscategories.id, categoryid, calendartype, externalaccountid, calendarid FROM externalcalendarscategories";
             if($userid!=-1)
             {
-                $sql.= " AND userid = ?";
+                $sql .= " INNER JOIN usersexternalaccounts ON (usersexternalaccounts.id = externalcalendarscategories.externalaccountid) ";
             }
+            $sql .=  " WHERE categoryid = ?";
+            if($userid != -1)
+            {
+                $sql .= " AND usersexternalaccounts.userid=?";
+            }
+            
+            
             if($stmt = $link->prepare($sql))
             {
                 if($userid!=-1)
@@ -329,13 +336,13 @@ class Category {
                 }
                 else
                 {
-                 $stmt->bind_param("i", $this->id);   
+                 $stmt->bind_param("i", $this->id);
                 }
                  if($stmt->execute())
                  {
                  $result = $stmt->get_result();
                      while($row = $result->fetch_assoc()) {
-                         $curr = new UserExternalCalendar($row['userid'], $row['externalaccountid'], $row['calendartype'], $row['calendarid']);
+                         $curr = new UserExternalCalendar($row['externalaccountid'], $row['calendartype'], $row['calendarid']);
                          array_push($this->external_calendars, $curr);
                      }
                  }
@@ -365,7 +372,7 @@ class Category {
        
         $max=0;
         // Get max id value
-        $sql = "SELECT MAX(id) FROM externalcalendarsuserscategories";
+        $sql = "SELECT MAX(id) FROM externalcalendarscategories";
         if($stmt = $link->prepare($sql))
         {          
             $stmt->execute();
@@ -378,11 +385,11 @@ class Category {
         $link->begin_transaction();
         try
         {
-            $sql = "INSERT INTO externalcalendarsuserscategories(id, userid, categoryid, externalaccountid, calendarid, calendarname, calendartype) "
-                . "VALUES(?,?,?,?,?,?,?)"; 
+            $sql = "INSERT INTO externalcalendarscategories(id, categoryid, externalaccountid, calendarid, calendarname, calendartype) "
+                . "VALUES(?,?,?,?,?,?)"; 
             if($stmt = $link->prepare($sql))
             {
-                $stmt->bind_param("iiiisss", $max, $user_id, $this->id, $external_account_id, $external_calendar_id, $external_calendar_name, $calendar_type);
+                $stmt->bind_param("iiisss", $max, $this->id, $external_account_id, $external_calendar_id, $external_calendar_name, $calendar_type);
                 $stmt->execute();
                 $stmt->close();
                 $ret = 1;
@@ -417,10 +424,10 @@ class Category {
            $link->begin_transaction();
            try
            {
-               $sql = "DELETE FROM externalcalendarsuserscategories WHERE id=? AND categoryid=? AND userid=?"; 
+               $sql = "DELETE FROM externalcalendarscategories WHERE id=? AND categoryid=?"; 
                if($stmt = $link->prepare($sql))
                {
-                   $stmt->bind_param("iii", $id, $this->id, $user_id);
+                   $stmt->bind_param("ii", $id, $this->id);
                    $stmt->execute();
                    $stmt->close();
                    $ret = 1;
