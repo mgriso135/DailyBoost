@@ -147,8 +147,8 @@ class UserConfigurationController extends Controller {
                 $client = new Google_Client(['client_id' => AppConfig::$GOOGLE_CLIENT_ID]);
                 $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
                 $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
-                //$client->setRedirectUri("https://www.virtualchief.net");
-                $client->setRedirectUri("http://localhost:88");
+                $client->setRedirectUri("https://www.virtualchief.net");
+                //$client->setRedirectUri("http://localhost:88");
                 $client->setAccessType("offline");
                 $client->setScopes("profile email https://www.googleapis.com/auth/calendar");
                 $client->fetchAccessTokenWithAuthCode(urldecode($code));

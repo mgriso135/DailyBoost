@@ -974,8 +974,8 @@ class User
                     $client = new Google_Client();
                     $client->setClientId(AppConfig::$GOOGLE_CLIENT_ID);
                     $client->setClientSecret(AppConfig::$GOOGLE_CLIENT_SECRET);
-                    //$client->setRedirectUri("https://www.virtualchief.net");
-                    $client->setRedirectUri("http://localhost:88");
+                    $client->setRedirectUri("https://www.virtualchief.net");
+                    //$client->setRedirectUri("http://localhost:88");
                     $client->setAccessType("offline");
                     $client->setScopes("profile email https://www.googleapis.com/auth/calendar");
                     $client->fetchAccessTokenWithRefreshToken($refresh_token);
