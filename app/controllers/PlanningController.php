@@ -91,6 +91,7 @@ class PlanningController extends Controller {
                             $tsk = new Task($ret);
                             if($tsk->id!=-1)
                             {
+                                $tsk->WriteTaskToExternalCalendars();
                                 $ret = json_encode($tsk);
                             }
                         }

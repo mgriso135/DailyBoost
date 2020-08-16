@@ -941,6 +941,9 @@ class Task {
                 $stmt->bind_param("si", $name, $this->id);
                 $stmt->execute();
                 $stmt->close();
+                
+                $this->name = $name;
+                $this->WriteTaskToExternalCalendars();
             }
             else
             {
@@ -969,6 +972,9 @@ class Task {
                 $stmt->bind_param("si", $description, $this->id);
                 $stmt->execute();
                 $stmt->close();
+                
+                $this->description = $description;
+                $this->WriteTaskToExternalCalendars();
             }
             else
             {
@@ -1036,6 +1042,11 @@ class Task {
                 $stmt->bind_param("ssssi", $earlystart, $latestart, $earlyfinish, $latefinish, $this->id);
                 $stmt->execute();
                 $stmt->close();
+                
+                $this->earlystart = $start;
+                $this->latestart = $start;
+                $this->earlyfinish = $end;
+                $this->latefinish = $end;
             }
             else
             {
@@ -1073,6 +1084,8 @@ class Task {
                     $stmt->bind_param("ii", $category_id, $this->id);
                     $stmt->execute();
                     $stmt->close();
+                    
+                    $this->loadCategories();
                 }
                 else
                 {
@@ -1244,6 +1257,10 @@ class Task {
                     if(sizeof($this->external_tasks) > 0)
                     {
                         // Updates the task
+                        if($extcal->calendar_type == "Google Calendar")
+                        {
+                            $ret = $this->UpdateTaskToExternalCalendars_Google($extcal, $this->external_tasks[0]->externaltaskid);
+                        }
                     }
                     else
                     {
@@ -1270,73 +1287,68 @@ class Task {
         $calendar->external_account->checkTokenValidity();
         if($calendar->external_account->isTokenValid)
         {
-
             $util = new utilities();
             $client = $util->getGoogleClient();
-                $client->setScopes($calendar->external_account->scope);//"profile email https://www.googleapis.com/auth/calendar");
-                $client->fetchAccessTokenWithRefreshToken($calendar->external_account->refresh_token);
-                $a_tok = $client->getAccessToken();
-                $service = new Google_Service_Oauth2($client);
-                $user = $service->userinfo->get();
-                $calService = new Google_Service_Calendar($client);
-                $calendarList = $calService->calendarList->listCalendarList()->items;
-
-
-                $timezone = 'GMT';
-                if(isset($_SESSION['userid']) && $_SESSION['userid'] != "")
+            $client->setScopes($calendar->external_account->scope);//"profile email https://www.googleapis.com/auth/calendar");
+            $client->fetchAccessTokenWithRefreshToken($calendar->external_account->refresh_token);
+            $a_tok = $client->getAccessToken();
+            //$service = new Google_Service_Oauth2($client);
+            //$user = $service->userinfo->get();
+            $calService = new Google_Service_Calendar($client);
+            //$calendarList = $calService->calendarList->listCalendarList()->items;
+            $timezone = 'GMT';
+            if(isset($_SESSION['userid']) && $_SESSION['userid'] != "")
+            {
+                $usr = new User($_SESSION['userid']);
+                if(isset($usr) && $usr->id > -1)
                 {
-                    $usr = new User($_SESSION['userid']);
-                    if(isset($usr) && $usr->id > -1)
-                    {
-                        $usr->loadConfiguration();
-                        $timezone = $usr->timezone;
-                    }
+                    $usr->loadConfiguration();
+                    $timezone = $usr->timezone;
                 }
-                
-       
-                $sdate = new DateTime($this->earlystart, new DateTimeZone('GMT'));
-                $edate = new DateTime($this->latefinish, new DateTimeZone('GMT'));
-               $strdate_start = $sdate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
-               $strdate_end = $edate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
-  
-                $event = new Google_Service_Calendar_Event(array(
-                    'summary' => $this->name,
-                    //'location' => '800 Howard St., San Francisco, CA 94103',
-                    'description' => $this->description,
-                    'start' => array(
-                      'dateTime' => $strdate_start,
-                      'timeZone' => $timezone,
-                    ),
-                    'end' => array(
-                      'dateTime' => $strdate_end, 
-                      'timeZone' => $timezone, 
-                    ),
-                    /*'recurrence' => array(
-                      'RRULE:FREQ=DAILY;COUNT=2'
-                    ),*/
-                    /*'attendees' => array(
-                      array('email' => 'lpage@example.com'),
-                      array('email' => 'sbrin@example.com'),
-                    ),*/
-                    'reminders' => array(
-                      'useDefault' => FALSE,
-                      'overrides' => array(
-                        array('method' => 'email', 'minutes' => 60),
-                        array('method' => 'popup', 'minutes' => 10),
-                      ),
-                    ),
-                  ));
+            }
+            $sdate = new DateTime($this->earlystart, new DateTimeZone('GMT'));
+            $edate = new DateTime($this->latefinish, new DateTimeZone('GMT'));
+           $strdate_start = $sdate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
+           $strdate_end = $edate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
 
-                  $calendarId = $calendar->calendar_name;//'primary';
-                  $event2 = $calService->events->insert($calendarId, $event);
-                  //var_dump($event2);
-                  
-                  echo "\nEvent id: " . $event2->id . "\n";
-                  
-                  // Write to database
-                  $this->WriteExternalTaskToDatabase($category_id, $calendar->id, $this->id, $event2->id);
-                  
-                  $ret = 1;
+            $event = new Google_Service_Calendar_Event(array(
+                'summary' => $this->name,
+                //'location' => '800 Howard St., San Francisco, CA 94103',
+                'description' => $this->description,
+                'start' => array(
+                  'dateTime' => $strdate_start,
+                  'timeZone' => $timezone,
+                ),
+                'end' => array(
+                  'dateTime' => $strdate_end, 
+                  'timeZone' => $timezone, 
+                ),
+                /*'recurrence' => array(
+                  'RRULE:FREQ=DAILY;COUNT=2'
+                ),*/
+                /*'attendees' => array(
+                  array('email' => 'lpage@example.com'),
+                  array('email' => 'sbrin@example.com'),
+                ),*/
+                'reminders' => array(
+                  'useDefault' => FALSE,
+                  'overrides' => array(
+                    array('method' => 'email', 'minutes' => 60),
+                    array('method' => 'popup', 'minutes' => 10),
+                  ),
+                ),
+              ));
+
+              $calendarId = $calendar->calendar_name;//'primary';
+              $event2 = $calService->events->insert($calendarId, $event);
+              //var_dump($event2);
+
+              //echo "\nEvent id: " . $event2->id . "\n";
+
+              // Write to database
+              $this->WriteExternalTaskToDatabase($category_id, $calendar->id, $this->id, $event2->id);
+
+              $ret = 1;
         }
         else
         {
@@ -1403,6 +1415,45 @@ class Task {
         
     }
     
+    private function UpdateTaskToExternalCalendars_Google($calendar, $eventid)
+    {
+        $ret = 0;
+        
+        $timezone = 'GMT';
+        if(isset($_SESSION['userid']) && $_SESSION['userid'] != "")
+        {
+            $usr = new User($_SESSION['userid']);
+            if(isset($usr) && $usr->id > -1)
+            {
+                $usr->loadConfiguration();
+                $timezone = $usr->timezone;
+            }
+        }
+        $sdate = new DateTime($this->earlystart, new DateTimeZone('GMT'));
+        $edate = new DateTime($this->latefinish, new DateTimeZone('GMT'));
+        $strdate_start = $sdate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
+        $strdate_end = $edate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
+        
+        $util = new utilities();
+        $client = $util->getGoogleClient();
+        $client->setScopes($calendar->external_account->scope);
+        $client->fetchAccessTokenWithRefreshToken($calendar->external_account->refresh_token);
+        $a_tok = $client->getAccessToken();
+        //$service = new Google_Service_Oauth2($client);
+        //$user = $service->userinfo->get();
+        $calService = new Google_Service_Calendar($client);
+        // First retrieve the event from the API.
+        $event = $calService->events->get($calendar->calendar_name, $eventid);
+        $event->setSummary($this->name);
+        $event->setDescription($this->description);
+        $event->setStart(new Google_Service_Calendar_EventDateTime(['dateTime' => $strdate_start,'timeZone' => $timezone]));
+        $event->setEnd(new Google_Service_Calendar_EventDateTime(['dateTime' => $strdate_end,'timeZone' => $timezone]));
+        $updatedEvent = $calService->events->update($calendar->calendar_name, $event->getId(), $event);
+        // Print the updated date.
+        //echo $updatedEvent->getUpdated();
+        $ret = 1;
+        return $ret;
+    }
 }
 
 class ExternalTask
@@ -1422,7 +1473,7 @@ class ExternalTask
         $this->externaltaskid = -1;
         $this->internaltaskid = -1;
         $this->calendartype = -1;
-        
+
         if($id != -1)
         {
             $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
@@ -1430,11 +1481,11 @@ class ExternalTask
                 if($link === false){
                     die("ERROR: Could not connect. " . mysqli_connect_error());
                 }
-                $sql = "SELECT externalcalendartask.id, externalcalendartask.userid, externalcalendartask.categoryid, "
+                $sql = "SELECT externalcalendartask.id, externalcalendartask.categoryid, "
                         ." externalcalendarid, externaltaskid, internaltaskid, " 
                         ." externalcalendarscategories.calendartype "
                         ." FROM externalcalendartask INNER JOIN externalcalendarscategories ON "
-                        ." (externalcalendartask.externalcalendarid = externalcalendarscategories.id) WHERE id=?";
+                        ." (externalcalendartask.externalcalendarid = externalcalendarscategories.id) WHERE externalcalendartask.id=?";
                 if($stmt = $link->prepare($sql))
                 {
                     $stmt->bind_param("i", $id);
@@ -1449,6 +1500,10 @@ class ExternalTask
                         $this->calendartype = $row['calendartype'];
                     }
                     $stmt->close();
+                }
+                else    
+                {
+                    //echo $link->error;
                 }
                 mysqli_close($link);
         }

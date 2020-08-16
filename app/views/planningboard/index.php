@@ -286,7 +286,6 @@
             }
         });
         
-        
         function loadTasksPlanned()
         {
             $("#imgloadtasksinexecution").fadeIn();
