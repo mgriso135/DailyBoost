@@ -1047,6 +1047,7 @@ class Task {
                 $this->latestart = $start;
                 $this->earlyfinish = $end;
                 $this->latefinish = $end;
+                $this->WriteTaskToExternalCalendars();
             }
             else
             {
