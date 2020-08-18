@@ -244,7 +244,7 @@
                         end_date: moment(end).format('YYYY-MM-DD HH:mm:ss'),
                     },
                     success: function (result) {
-                        //console.log(result);
+                        console.log(result);
                         if(result.length > 0)
                         {
                             $("#taskid").val('');
@@ -362,7 +362,6 @@
                                     +"<td><span id='taskstartdate_" + res[i].id + "'>"+ strStart + "</span></td>"
                                     +"<td><span id='taskenddate_" + res[i].id + "'>" + strEnd + "</span></td>"
                                     +"<td>" + res[i].neverending + "</td>"
-                            +"<td><span class='push_external icon-plus' style='width:10%; height:10%;color:grey;cursor:pointer;' data-inline='false' id='pushexternal_"+res[i].id+"'></span></td>"
                                   +"</tr>";
                           //console.log(strTable);
                       }
@@ -387,31 +386,6 @@
                                   }
           });
         }
-        
-        $("#dvLstPlannedTasks").on("click", ".push_external", function(){
-        console.log("Push external");
-        var aid = $(this).prop("id").split("_");
-        var taskid = aid[1];
-        console.log(taskid);
-         $.ajax({ 
-                   // $account, $user, $checksum, $firstname, $lastname, $email, $password, $password2
-                   url: "/dailyboost/public/ExternalAppsController/pushTaskToExternalCalendars",
-                   type: 'POST',
-                   dataType: "html",
-                   data: {
-                       taskid: taskid
-                   },
-                   success: function (result) {
-                       console.log(result);
-                   },
-                   error: function (result) {
-                       alert("Error");
-                   },
-                   warning: function (result) {
-                      alert("Warning");
-                  }
-               });
-        });
         
         $(".catfilter").click(function(){
             var acatid = $(this).prop("id").split('_');

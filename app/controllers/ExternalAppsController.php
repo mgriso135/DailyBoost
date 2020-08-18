@@ -169,17 +169,15 @@ class ExternalAppsController extends Controller {
         $ret = 0;
         if(isset($_SESSION['userid']) && $_SESSION['userid'] != "" && isset($_SESSION['isLoggedIn']))
         {
-            if(isset($_POST['id']) && $_POST['id'] >= 0
+            if(isset($_POST['external_calendar_id']) && $_POST['external_calendar_id'] >= 0
                     && isset($_POST['category_id']) && $_POST['category_id'] >= 0)
             {
-                $cal_id = $_POST['id'];
+                $cal_id = $_POST['external_calendar_id'];
                 $category_id = $_POST['category_id'];
-                echo $category_id. " " . $cal_id . " ";
                 $this->model('Category');
                 $cat = new Category($category_id);
                 if($cat->id!=-1 && $cal_id >= 0)
                 {
-                    echo "Inside";
                     $ret = $cat->deleteExternalCalendar($cal_id);
                 }
                 else

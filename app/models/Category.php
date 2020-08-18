@@ -316,7 +316,7 @@ class Category {
                 die("ERROR: Could not connect. " . mysqli_connect_error());
            }
 
-            $sql = "SELECT externalcalendarscategories.id, categoryid, calendartype, externalaccountid, calendarid FROM externalcalendarscategories";
+            $sql = "SELECT externalcalendarscategories.id AS id, categoryid, calendartype, externalaccountid, calendarid FROM externalcalendarscategories";
             if($userid!=-1)
             {
                 $sql .= " INNER JOIN usersexternalaccounts ON (usersexternalaccounts.id = externalcalendarscategories.externalaccountid) ";
@@ -342,7 +342,7 @@ class Category {
                  {
                  $result = $stmt->get_result();
                      while($row = $result->fetch_assoc()) {
-                         $curr = new UserExternalCalendar($row['externalaccountid'], $row['calendartype'], $row['calendarid']);
+                         $curr = new UserExternalCalendar($row['id']);//$row['externalaccountid'], $row['calendartype'], $row['calendarid']);
                          array_push($this->external_calendars, $curr);
                      }
                  }

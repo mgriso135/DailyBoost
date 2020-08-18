@@ -107,7 +107,7 @@ class Task {
     
     public function loadCategories()
     {
-        $this->user = array();
+        $this->categories = array();
         if($this->id > -1)
         {
         // Attempt insert query execution
@@ -943,7 +943,7 @@ class Task {
                 $stmt->close();
                 
                 $this->name = $name;
-                $this->WriteTaskToExternalCalendars();
+                //$this->WriteTaskToExternalCalendars();
             }
             else
             {
@@ -974,7 +974,7 @@ class Task {
                 $stmt->close();
                 
                 $this->description = $description;
-                $this->WriteTaskToExternalCalendars();
+                //$this->WriteTaskToExternalCalendars();
             }
             else
             {
@@ -1043,11 +1043,11 @@ class Task {
                 $stmt->execute();
                 $stmt->close();
                 
-                $this->earlystart = $start;
-                $this->latestart = $start;
-                $this->earlyfinish = $end;
-                $this->latefinish = $end;
-                $this->WriteTaskToExternalCalendars();
+                $this->earlystart = $sdate;
+                $this->latestart = $sdate;
+                $this->earlyfinish = $edate;
+                $this->latefinish = $edate;
+                // $this->WriteTaskToExternalCalendars();
             }
             else
             {
@@ -1070,6 +1070,7 @@ class Task {
             $cat = new Category($category_id);
             if($cat->id != -1)
             {
+                $this->DeleteExternals();
                 // Write the lead time in the database
                 // 
                 // Attempt insert query execution
@@ -1085,13 +1086,14 @@ class Task {
                     $stmt->bind_param("ii", $category_id, $this->id);
                     $stmt->execute();
                     $stmt->close();
-                    
-                    $this->loadCategories();
                 }
                 else
                 {
                 }
                 mysqli_close($link);
+                
+                //$this->loadCategories();
+                //$this->WriteTaskToExternalCalendars();
             }
             else
             {
@@ -1309,8 +1311,8 @@ class Task {
             }
             $sdate = new DateTime($this->earlystart, new DateTimeZone('GMT'));
             $edate = new DateTime($this->latefinish, new DateTimeZone('GMT'));
-           $strdate_start = $sdate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
-           $strdate_end = $edate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
+           $strdate_start = $sdate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');//$sdate->format('Y-m-d\TH:i:sP');// 
+           $strdate_end = $edate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');//$edate->format('Y-m-d\TH:i:sP');//
 
             $event = new Google_Service_Calendar_Event(array(
                 'summary' => $this->name,
@@ -1334,7 +1336,7 @@ class Task {
                 'reminders' => array(
                   'useDefault' => FALSE,
                   'overrides' => array(
-                    array('method' => 'email', 'minutes' => 60),
+                  //  array('method' => 'email', 'minutes' => 60),
                     array('method' => 'popup', 'minutes' => 10),
                   ),
                 ),
@@ -1430,10 +1432,10 @@ class Task {
                 $timezone = $usr->timezone;
             }
         }
-        $sdate = new DateTime($this->earlystart, new DateTimeZone('GMT'));
-        $edate = new DateTime($this->latefinish, new DateTimeZone('GMT'));
-        $strdate_start = $sdate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
-        $strdate_end = $edate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
+        $sdate = new DateTime($this->earlystart, new DateTimeZone($timezone));
+        $edate = new DateTime($this->latefinish, new DateTimeZone($timezone));
+        $strdate_start = $sdate->format('Y-m-d\TH:i:sP'); //$sdate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
+        $strdate_end = $edate->format('Y-m-d\TH:i:sP'); //$edate->setTimezone(new DateTimeZone($timezone))->format('Y-m-d\TH:i:sP');
         
         $util = new utilities();
         $client = $util->getGoogleClient();
@@ -1455,6 +1457,22 @@ class Task {
         $ret = 1;
         return $ret;
     }
+    
+    public function DeleteExternals()
+    {
+        $ret = 0;
+        if($this->id != -1)
+        {
+            // Checks all external calendars for the category of the task
+            $this->loadExternalTasks();
+            foreach($this->external_tasks as $ext)
+            {
+                $ext->delete();
+            }
+            $ret = 1;
+        }
+        return $ret;
+    }
 }
 
 class ExternalTask
@@ -1465,6 +1483,8 @@ class ExternalTask
     public $externaltaskid;
     public $internaltaskid;
     public $calendartype;
+    public $externalcalendar_name;
+    public $externalcalendar_id;
     
     public function __construct($id=-1)
     {
@@ -1474,6 +1494,8 @@ class ExternalTask
         $this->externaltaskid = -1;
         $this->internaltaskid = -1;
         $this->calendartype = -1;
+        $this->externalcalendar_id = "";
+        $this->externalcalendar_name = "";
 
         if($id != -1)
         {
@@ -1484,7 +1506,7 @@ class ExternalTask
                 }
                 $sql = "SELECT externalcalendartask.id, externalcalendartask.categoryid, "
                         ." externalcalendarid, externaltaskid, internaltaskid, " 
-                        ." externalcalendarscategories.calendartype "
+                        ." externalcalendarscategories.calendartype, calendarid, calendarname "
                         ." FROM externalcalendartask INNER JOIN externalcalendarscategories ON "
                         ." (externalcalendartask.externalcalendarid = externalcalendarscategories.id) WHERE externalcalendartask.id=?";
                 if($stmt = $link->prepare($sql))
@@ -1499,6 +1521,8 @@ class ExternalTask
                         $this->externaltaskid = $row['externaltaskid'];
                         $this->internaltaskid = $row['internaltaskid'];
                         $this->calendartype = $row['calendartype'];
+                        $this->externalcalendar_id = $row['calendarid'];
+                        $this->externalcalendar_name = $row['calendarname'];
                     }
                     $stmt->close();
                 }
@@ -1507,6 +1531,64 @@ class ExternalTask
                     //echo $link->error;
                 }
                 mysqli_close($link);
+        }
+    }
+    
+    // Removes the external task from the remote calendar and also from the internal database
+    public function delete()
+    {
+        if($this->id != -1)
+        {
+            if($this->calendartype == "Google Calendar")
+            {
+                $ecal = new UserExternalCalendar($this->externalcalendarid);
+                $eacc = new UserExternalAccount($ecal->external_account_id);
+                $util = new utilities();
+                $client = $util->getGoogleClient();
+                $client->setScopes($eacc->scope);//$calendar->external_account->scope);
+                $client->fetchAccessTokenWithRefreshToken($eacc->refresh_token);//$calendar->external_account->refresh_token);
+                $a_tok = $client->getAccessToken();
+                $calService = new Google_Service_Calendar($client);
+                try
+                {
+                    $event = $calService->events->delete($this->externalcalendar_id, $this->externaltaskid);
+                }
+                catch(Exception $e)
+                {
+                    
+                }
+            }
+            else if($this->calendartype == "Microsoft Outlook")
+            {
+                
+            }
+            
+            // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+
+            $sql = "DELETE FROM externalcalendartask WHERE id=?";
+            if($stmt = $link->prepare($sql))
+            {          
+                 $stmt->bind_param("i", $this->id);
+                 if($stmt->execute())
+                 {
+                     $ret = 1;
+                 }
+                 else
+                 {
+                     $ret = -4;
+                 }
+                 $stmt->close();
+             }
+             else
+             {
+                 echo $link->error;
+             }
+             mysqli_close($link);
         }
     }
 }

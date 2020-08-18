@@ -107,13 +107,15 @@ $(document).ready(function(){
             else
             {
                 jsRes = JSON.parse(result);
+                //console.log(result);
                 var strCalendars = "";
                 for(var i = 0; i < jsRes.length; i++)
-                {                    
+                { 
+                    console.log(jsRes[i]);
                     strCalendars += "<span class='badge badge-pill badge-primary'>"+jsRes[i].calendar_name 
                             + " <span class='icon-close delcal' style='cursor:pointer' "
-                            +" id='delcal_" + categoryId + "_" + jsRes[i].id + "' "
-                            +" value='" + categoryId + "_" + jsRes[i].id + "'></span></span>";
+                            +" id='delcal_" + jsRes[i].id + "_" + categoryId + "' "
+                            +" value='" + jsRes[i].id + "'></span></span>";
                 }
                 $("#linkedCals_" + categoryId).html(strCalendars);
             }
@@ -129,17 +131,19 @@ $(document).ready(function(){
     
     $(".tblmanagecals").on("click", ".delcal", function(){
         var aid = $(this).prop('id').split('_');
-        var catid= aid[1];
-        var calid= aid[2];
+        var external_calendar_id = aid[1];
+        var catid=aid[2];
+        console.log("Deleting calendar link " +catid + " " + external_calendar_id);
         $.ajax({ 
          url: "/dailyboost/public/ExternalAppsController/deleteExternalCalendarFromCategory",
          type: 'POST',
          dataType: "html",
          data: {
-             category_id: catid,
-             id: calid
+             external_calendar_id: external_calendar_id,
+             category_id: catid
          },
          success: function (result) {
+             console.log(result);
             loadLinkedCalendars(catid);
          },
          error: function (result) {

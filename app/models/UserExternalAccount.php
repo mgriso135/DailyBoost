@@ -121,13 +121,11 @@ class UserExternalCalendar
     public $categories;
     public $external_account;
     
-    public function __construct($extaccountid=-1, $calendartype="", $calendarid=-1)
+    public function __construct($id=-1/*$extaccountid=-1, $calendartype="", $calendarid=-1*/)
     {
         $this->calendar_id = -1;
         $this->external_account_id = -1;
         $this->categories = array();
-        if($extaccountid!=-1 && $calendarid!=-1)
-        {
             $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
             // Check connection
             if($link === false){
@@ -135,10 +133,11 @@ class UserExternalCalendar
             }
 
             $sql = "SELECT id, categoryid, externalaccountid, calendarid, calendarname, calendartype FROM externalcalendarscategories "
-                    . " WHERE externalaccountid=? AND calendarid=? AND calendartype=?";
+                    . " WHERE id =?";
+                    //. " WHERE externalaccountid=? AND calendarid=? AND calendartype=?";
             if($stmt = $link->prepare($sql))
             {
-                $stmt->bind_param("iss", $extaccountid, $calendarid, $calendartype);
+                $stmt->bind_param("i", $id);// $extaccountid, $calendarid, $calendartype);
                 $stmt->execute();
                 $result = $stmt->get_result();
                 while($row = $result->fetch_assoc()) {
@@ -152,7 +151,6 @@ class UserExternalCalendar
                 $stmt->close();
                 $ret = 1;
             }
-        }
     }
     
     public function loadCategories()

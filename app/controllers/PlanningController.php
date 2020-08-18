@@ -177,7 +177,6 @@ class PlanningController extends Controller {
                         $usr->loadConfiguration();
                         $tsk->setPlanningDates($start_date, $end_date, $usr->timezone);
                         
-                        
                         $neverending1="0";
                         if($neverending=="true")
                         {
@@ -202,6 +201,7 @@ class PlanningController extends Controller {
                             $tsk->changeCategory($category_id);
                         }
                         $tsk = new Task($taskid);
+                        $tsk->WriteTaskToExternalCalendars();
                         $ret = json_encode($tsk);
                     }
                     else
