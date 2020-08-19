@@ -64,6 +64,8 @@ class PlanningController extends Controller {
         $neverending = $_POST['neverending'];
         $start_date = $_POST['start_date'];
         $end_date = $_POST['end_date'];
+        $plan_task = $_POST['plan_task'];
+        
         if($_SESSION['isLoggedIn'] && $_SESSION['userid'])
         {
             $this->model('User');
@@ -84,12 +86,13 @@ class PlanningController extends Controller {
                     if($cat->id !=-1)
                     {
                         $usr->loadConfiguration();
-                        $ret = $cat->addTask($taskname, "", $start_date, $end_date, $neverending, 0.0, $usr->timezone);
+                        $ret = $cat->addTask($taskname, "", $plan_task, $start_date, $end_date, $neverending, 0.0, $usr->timezone);
                         if($ret > -1)
                         {
                             $this->model('Task');
                             $tsk = new Task($ret);
-                            if($tsk->id!=-1)
+                            echo "Plan task " . $tsk->plantask . " -";
+                            if($tsk->id!=-1 && $tsk->plantask)
                             {
                                 $tsk->WriteTaskToExternalCalendars();
                                 $ret = json_encode($tsk);
@@ -148,6 +151,7 @@ class PlanningController extends Controller {
             $neverending = $_POST['neverending'];
             $start_date = $_POST['start_date'];
             $end_date = $_POST['end_date'];
+            $plantask = $_POST['plantask'];
             
             $this->model('Task');
             $tsk = new Task($taskid);
@@ -187,6 +191,18 @@ class PlanningController extends Controller {
                         {
                             $tsk->setNeverEnding($neverending);
                         }
+                        
+                        $plantask1="0";
+                        if($plantask=="true")
+                        {
+                            $plantask1 = "1";
+                        }
+                        
+                        if($tsk->plantask != $plantask1)
+                        {
+                            $tsk->setPlanTask($plantask);
+                        }
+                        
                         $tsk->loadCategories();
                         $changecat = 0;
                         for($i = 0; $i < $tsk->categories && $changecat; $i++)
@@ -200,8 +216,13 @@ class PlanningController extends Controller {
                         {
                             $tsk->changeCategory($category_id);
                         }
+                        
                         $tsk = new Task($taskid);
-                        $tsk->WriteTaskToExternalCalendars();
+                        if($tsk->plantask)
+                        {
+                            $tsk->WriteTaskToExternalCalendars();
+                        }
+                        
                         $ret = json_encode($tsk);
                     }
                     else

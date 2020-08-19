@@ -150,14 +150,14 @@
         
         $("#btnSaveTask").click(function(){
         
-        $("#taskid").removeClass("is-invalid");
-        $("#taskid").removeClass("is-valid");
-        $("#addtask_category").removeClass("is-valid");
-        $("#addtask_category").removeClass("is-invalid");
-        $("#startdate").removeClass("is-invalid");
-        $("#enddate").removeClass("is-invalid");
-        $("#startdate").removeClass("is-valid");
-        $("#enddate").removeClass("is-valid");
+            $("#taskid").removeClass("is-invalid");
+            $("#taskid").removeClass("is-valid");
+            $("#addtask_category").removeClass("is-valid");
+            $("#addtask_category").removeClass("is-invalid");
+            $("#startdate").removeClass("is-invalid");
+            $("#enddate").removeClass("is-invalid");
+            $("#startdate").removeClass("is-valid");
+            $("#enddate").removeClass("is-valid");
         
             var start = new Date(moment($("#startdate").val()).format());
             var end = new Date(moment($("#enddate").val()).format());
@@ -170,6 +170,7 @@
                 categoryId = -1;
             }
             var neverending = $("#chkNeverEnding").prop("checked");
+            var plantask = $("#chkPlanTask").prop("checked");
             
             var check = false;
             var checkTaskName = false;
@@ -211,9 +212,9 @@
                 strInputVal += "<?= _INPUT_VALIDATION_ERROR_NEVERENDING ?><br />";
                 $("#chkNeverEnding").addClass("is-invalid");
             }
-            
+                        
             var checkDates = false;
-            if(start <=end)
+            if(start <=end || plantask == false)
             {
                 checkDates = true;
                 $("#startdate").addClass("is-valid");
@@ -242,6 +243,7 @@
                         neverending: neverending,
                         start_date: moment(start).format('YYYY-MM-DD HH:mm:ss'),
                         end_date: moment(end).format('YYYY-MM-DD HH:mm:ss'),
+                        plan_task: plantask,
                     },
                     success: function (result) {
                         console.log(result);
@@ -336,8 +338,11 @@
                                 }
                                 
                                 strStart = "";
-                                strEnd = "";
+                                strEnd = "One day";
                                 
+                                console.log(i + " " + res[i].plantask + " - " + JSON.stringify(res[i]));
+                            if(res[i].plantask == true)
+                            {
                                 var dt = new Date(2000,1,1);                                
                                 if(new Date(res[i].earlystart.date) > dt)
                                 {
@@ -348,9 +353,11 @@
                                 {
                                     strEnd = moment(res[i].latefinish.date).format('DD/MM/YYYY HH:mm:ss');
                                 }
+                            }
                                     
                                 
                           strTable += "<input type='hidden' id='categoryid_" + res[i].id + "' value='" + res[i].category_id + "' />"
+                          + "<input type='hidden' id='plantask_" + res[i].id + "' value='" + res[i].plantask + "' />"
                           +"<input type='hidden' id='description_" + res[i].id + "' value='" + res[i].description + "' />"
                   +"<input type='hidden' id='neverending_" + res[i].id + "' value='" + res[i].neverending + "' />"
                                   +"<tr id='task_"+res[i].id+"'>"
@@ -461,12 +468,22 @@
                 var enddate = moment($("#taskenddate_" + taskid).html(), "DD/MM/YYYY HH:mm:ss");
                 var neverending = $("#neverending_" + taskid).val();
                 var description = $("#description_" + taskid).val();
+                var plantask = $("#plantask_" + taskid).val() == "1" ? true : false;
+                console.log("Plan task? " + plantask);
                 
                 $("#edittask_modal_taskname").val($("#taskname_" + taskid).html());
                 $("#edittask_modal_categoryname").val($("#categoryname_" + taskid).html());
                 $("#edittask_modal_startdate").val(moment(startdate).format('YYYY-MM-DD HH:mm:ss'));
                 $("#edittask_modal_enddate").val(moment(enddate).format('YYYY-MM-DD HH:mm:ss'));
                 $("#edittask_modal_description").val(description);
+                $("#edittask_modal_chkPlanTask").prop("checked", plantask);
+                if(!plantask)
+                {
+                    $("#edittask_modal_startdate").prop("disabled", true);
+                    $("#edittask_modal_enddate").prop("disabled", true);
+                    $("#edittask_modal_startdate").val(moment().add(1,'days').format('YYYY-MM-DD 18:00:00'));
+                    $("#edittask_modal_enddate").val(moment().add(1,'days').format('YYYY-MM-DD 19:00:00'));
+                }
 
                 if(neverending == 1)
                 {
@@ -493,6 +510,19 @@
             }
         });
         
+        $("#edittask_modal_chkPlanTask").change(function() {
+            if($("#edittask_modal_chkPlanTask").prop("checked"))
+            {
+                $("#edittask_modal_startdate").prop("disabled", false);
+                $("#edittask_modal_enddate").prop("disabled", false);
+            }
+            else
+            {
+                $("#edittask_modal_startdate").prop("disabled", true);
+                $("#edittask_modal_enddate").prop("disabled", true);
+            }
+        });
+        
         $("#edittask_modal_btnSaveTask").click(function(){
             console.log("Saving changes...");
             $("#edittask_modal_msg").fadeOut();
@@ -508,6 +538,7 @@
                 var enddate = moment($("#edittask_modal_enddate").val(), "YYYY-MM-DD HH:mm:ss");
                 var description = $("#edittask_modal_description").val();
                 var neverending = $("#edittask_modal_chkNeverEnding").prop("checked");
+                var plantask = $("#edittask_modal_chkPlanTask").prop("checked");
                 
                 var categoryId = $("#categorieslist option[value='" + categoryname + "']").attr('data-id'); 
                 if(categoryId == null || !$.isNumeric(categoryId))
@@ -530,6 +561,7 @@
                         taskname: taskname,
                         taskdescription: description,
                         neverending: neverending,
+                        plantask: plantask,
                         start_date: startdate.format("YYYY-MM-DD HH:mm:ss"),
                         end_date: enddate.format("YYYY-MM-DD HH:mm:ss")
                    },
@@ -598,6 +630,19 @@
                 $("#edittask_modal_enddate").val(moment("01/01/1970 00:00:00").format('YYYY-MM-DD HH:mm:ss'));
                 $("#edittask_modal_description").val("");
                 $("#edittask_modal_chkNeverEnding").prop("checked", false);*/
+            }
+        });
+        
+        $("#chkPlanTask").change(function() {
+            if($("#chkPlanTask").prop("checked"))
+            {
+                $("#startdate").prop("disabled", false);
+                $("#enddate").prop("disabled", false);
+            }
+            else
+            {
+                $("#startdate").prop("disabled", true);
+                $("#enddate").prop("disabled", true);
             }
         });
         
@@ -714,7 +759,10 @@
                                 </div>
                             </div>
                             <p></p>
-                      
+                            <div class="input-group-lg input-daterange align-items-center form-inline">
+                                                      <div class="input-group">
+                                <input type="checkbox" id="chkPlanTask" class="form-check-input" checked /><?= _INPUT_CHK_PLAN_TASK ?></div>
+                            </div>
                             <div class="input-group-lg input-daterange align-items-center form-inline">
                                 <div class='input-group date' id='datetimepicker1'>
                                     <input type='text' class="form-control" id="startdate"  />
@@ -812,6 +860,10 @@
                                 <div class="input-group-lg">
                                       <input id="edittask_modal_categoryname" list="categorieslist" placeholder="<?= _PLACEHOLDER_SELECTCATEGORY ?>" class="form-control" maxlength="254" value="" />
                                 </div>
+                            </div>
+                        <div class="input-group-lg input-daterange align-items-center form-inline">
+                                                      <div class="input-group">
+                                <input type="checkbox" id="edittask_modal_chkPlanTask" class="form-check-input" checked /><?= _INPUT_CHK_PLAN_TASK ?></div>
                             </div>
                         <div class="form-inline">
                             <input type="hidden" id="edittask_modal_taskid" />

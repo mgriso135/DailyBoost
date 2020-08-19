@@ -738,7 +738,7 @@ class User
             }
             $sql = "SELECT tasks.id AS tasks_id, tasks.name AS task_name, tasks.description AS task_description, tasks.status AS tasks_status, "
                     . " tasks.neverending AS neverending, tasks.plannedcycletime AS plannedcycletime, "
-                    . " earlystart, latefinish, categories.id AS category_id, categories.name AS categories_name "
+                    . " plantask, earlystart, latefinish, categories.id AS category_id, categories.name AS categories_name "
                     . " FROM tasks INNER JOIN categoriestasks ON(tasks.id = categoriestasks.taskid) "
                     . " INNER JOIN categories ON (categoriestasks.categoryid = categories.id)"
                     . " INNER JOIN categoriesusers ON (categoriesusers.idcategory = categoriestasks.categoryid) "
@@ -758,7 +758,7 @@ class User
                 $sql .= "categories.id = " . $categories_filter[sizeof($categories_filter) - 1] 
                         . ")";
             }
-            $sql.= " ORDER BY neverending ASC, latefinish ASC, earlystart ASC";
+            $sql.= " ORDER BY plantask DESC, neverending ASC, latefinish ASC, earlystart ASC";
             
             if($stmt = $link->prepare($sql))
             {
@@ -774,6 +774,7 @@ class User
                     $curr->status = $row['tasks_status'];
                     $curr->neverending = $row['neverending'];
                     $curr->plannedcycletime = $row['plannedcycletime'];
+                    $curr->plantask = $row['plantask'];
                     $curr->earlystart = new DateTime($row['earlystart'], new DateTimeZone('GMT'));
                     $curr->earlystart->setTimezone(new DateTimeZone($this->timezone))->format('Y-m-d H:i:s');
                     $curr->latefinish = new DateTime($row['latefinish'], new DateTimeZone('GMT'));

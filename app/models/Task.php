@@ -30,6 +30,7 @@ class Task {
     public $plannedcycletime;
     public $earlystart;
     public $latestart;
+    public $plantask;
     public $earlyfinish;
     public $latefinish;
     public $leadtime;
@@ -55,6 +56,7 @@ class Task {
     {
         $this->categories = array();
         $this->IsLoggedIn = false;
+        $this->plantask = false;
         $this->categories=[];
         if($taskid>-1)
         {
@@ -65,7 +67,7 @@ class Task {
             die("ERROR: Could not connect. " . mysqli_connect_error());
         }
        
-        $sql = "SELECT id, name, description, status, neverending, plannedcycletime, earlystart, latestart, earlyfinish, latefinish, ".
+        $sql = "SELECT id, name, description, status, neverending, plannedcycletime, plantask, earlystart, latestart, earlyfinish, latefinish, ".
                 " leadtime, workingtime, delay, realenddate FROM tasks WHERE id = ?";
        if($stmt = $link->prepare($sql))
        {
@@ -82,6 +84,7 @@ class Task {
             $this->status = $row['status'];
             $this->neverending = (bool)$row['neverending'];
             $this->plannedcycletime = $row['plannedcycletime'];
+            $this->plantask = (bool)$row['plantask'];
             $this->earlystart = $row['earlystart'];
             $this->latestart = $row['latestart'];
             $this->earlyfinish = $row['earlyfinish'];
@@ -1008,6 +1011,51 @@ class Task {
                 $stmt->bind_param("ii", $neverending1, $this->id);
                 $stmt->execute();
                 $stmt->close();
+            }
+            else
+            {
+                
+            }
+            mysqli_close($link);
+        }
+    }
+    
+    public function setPlanTask($plantask)
+    {
+        if($this->id != -1)
+        {
+        // Write the lead time in the database
+            // 
+            // Attempt insert query execution
+            $link = mysqli_connect(AppConfig::$DB_SERVER, AppConfig::$DB_USERNAME, AppConfig::$DB_PASSWORD, AppConfig::$DB_NAME);
+            // Check connection
+            if($link === false){
+                  die("ERROR: Could not connect. " . mysqli_connect_error());
+            }
+
+            $sql = "UPDATE tasks SET plantask = ? WHERE id = ?";
+           if($stmt = $link->prepare($sql))
+           {
+                $plantask1 = false;
+                if($plantask=="true")
+                {
+                    $plantask1 = true;
+                }
+                $stmt->bind_param("ii", $plantask1, $this->id);
+                $stmt->execute();
+                $stmt->close();
+                
+                $this->plantask = $plantask1;
+                
+                if($plantask1)
+                {
+                    $tsk = new Task($this->id);
+                    $tsk->WriteTaskToExternalCalendars();
+                }
+                else
+                {
+                    $this->DeleteExternals();
+                }
             }
             else
             {

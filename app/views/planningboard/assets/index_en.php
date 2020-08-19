@@ -33,6 +33,7 @@ define("_INPUT_VALIDATION_ERROR_DATES", "Start date is greater than end date");
 define("_INPUT_VALUIATION_ERROR_TASKNAME", "Task name can't be empty");
 define("_INPUT_VALIDATION_ERROR_CATEGORY", "Invalid category");
 define("_INPUT_VALIDATION_ERROR_NEVERENDING", "Invalid never ending flag");
+define("_INPUT_CHK_PLAN_TASK", "Schedule the task");
 define("_PLANNEDTASKS_LIST_TITLE", "Planned tasks");
 define("TASKLIST_CATEGORYNAME", "Category name");
 define("TASKLIST_TASKNAME", "Task name");

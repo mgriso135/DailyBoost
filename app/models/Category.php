@@ -197,7 +197,8 @@ class Category {
       * 0 if generic error
       * TaskID if task added correctly
       */
-     public function addTask($taskname, $description="", $startdate, $enddate, $neverending=false, $plannedcycletime=0.0, $timezone='UTC')
+     public function addTask($taskname, $description="", $plantask, $startdate, $enddate, 
+             $neverending=false, $plannedcycletime=0.0, $timezone='UTC')
      {
          $ret = 0;
          // Attempt insert query execution
@@ -228,9 +229,9 @@ class Category {
         try
         {
             $sql = "INSERT INTO tasks(id, name, description, status, neverending, plannedcycletime, "
-                ."earlystart, latestart, earlyfinish, latefinish, leadtime, workingtime, "
+                ."plantask, earlystart, latestart, earlyfinish, latefinish, leadtime, workingtime, "
                 . "delay, realenddate) "
-                . "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; 
+                . "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)"; 
             $stmt = $link->prepare($sql);
             $status = 'N';
             
@@ -251,9 +252,15 @@ class Category {
            {
                $neverending1 = true;
            }
+           
+           $plantask1 = false;
+           if($plantask == "true")
+           {
+               $plantask1 = true;
+           }
 
-            $stmt->bind_param("isssiissssiiis", $max, $taskname, $description, $status,
-            $neverending1, $plannedcycletime, $earlystart, $latestart, $earlyfinish, $latefinish, $leadtime, 
+            $stmt->bind_param("isssiiissssiiis", $max, $taskname, $description, $status,
+            $neverending1, $plannedcycletime, $plantask1, $earlystart, $latestart, $earlyfinish, $latefinish, $leadtime, 
                     $workingtime, $delay, $realenddate);
             $stmt->execute();
             $stmt->close();
@@ -273,6 +280,7 @@ class Category {
         }
                 
         mysqli_close($link);
+        
         return $ret;
      }
      
