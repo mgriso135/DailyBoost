@@ -40,7 +40,7 @@ class TasksExecutionController extends Controller {
                 {
 
                     // Creates the new task
-                    $task_id = $cat->addTask($taskname, "", 'now', '+1 hour');
+                    $task_id = $cat->addTask($taskname, "", false, 'now', '+1 hour');
                 }
 
                 // Then we can start the task!
@@ -284,7 +284,7 @@ class TasksExecutionController extends Controller {
                     }                    
                 }
             }
-            $tasklist_sorted = from($tasklist)->orderBy('$v->neverending')->thenBy('$v->latefinish')->thenBy('$v->earlystart')->toArray();
+            $tasklist_sorted = from($tasklist)->orderByDescending('$v->plantask')->thenBy('$v->neverending')->thenBy('$v->latefinish')->thenBy('$v->earlystart')->toArray();
             echo json_encode($tasklist_sorted);
         }
         else

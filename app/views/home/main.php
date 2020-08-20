@@ -73,6 +73,7 @@ function init()
   
   $("#starttask").click(function(){
       var taskName = $('#taskid').val();
+      var addCategoryId = -1;
       if(taskName.length >0)
       {
         var tid = $("#opentasks_list option[value='" + taskName + "']").attr('data-id');
@@ -93,8 +94,9 @@ function init()
         }
         else
         {
-            addCategoryId = -1;
+            addCategoryId = categoryId;
         }
+        alert(addCategoryId);
         // if taskid exists, then resumen. If catgory exists, then create a new one
         if(tid!=-1 || addCategoryId != -1)
         {
@@ -435,6 +437,13 @@ function init()
                      {
                          bgcolor = "background-color: yellow;";
                      }
+                     
+                     var strdate = "One day";
+                     if(tasks[i].plantask)
+                     {
+                         strdate = moment(tasks[i].latefinish).format("DD/MM/YYYY HH:mm:ss");
+                     }
+                     
                      strrow += "<tr id='execrow_" + tasks[i].id + "' style='"+bgcolor+"'>"
                      + "<input type='hidden' id='upcoming_categoryId_" + tasks[i].id + "' value='+" + tasks[i].category_id + "+' />"
                            + "<td><span class='icon-control-play btnstartupcomingtask' style='width:36px;height:36px;color:grey;cursor:pointer;' name='btnstartupcomingtask' id='btnstartupcomingtask_"+tasks[i].id+"' title='<?= _ICON_START ?>'></span></td>"
@@ -442,7 +451,7 @@ function init()
                            +"<td><input type='hidden' value='" + tasks[i].category_name + "' id='categoryname_"+tasks[i].id+"' />" + tasks[i].category_name + "</td>"
                            +"<td><input type='hidden' value='" + tasks[i].name + "' id='taskname_"+tasks[i].id+"' />" + tasks[i].name + "</td>"
                    +"<td><input type='hidden' value='" + tasks[i].description + "' id='taskdescription_"+tasks[i].id+"' />" + tasks[i].description + "</td>"
-                    + "<td>"+moment(tasks[i].latefinish).format("DD/MM/YYYY HH:mm:ss")+"</td>"
+                    + "<td>"+strdate+"</td>"
                          ;
                    strrow += "</tr>";
                  }

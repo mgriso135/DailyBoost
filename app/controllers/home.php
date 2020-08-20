@@ -97,7 +97,7 @@ class Home extends Controller
             
               $usr->loadTasksInExecution($category_id);
               $tasks_in_execution = $usr->tasks_in_execution;             
-              $tasklist_sorted = from($tasklist)->orderBy('$v->neverending')->thenBy('$v->latefinish')->thenBy('$v->earlystart')->toArray();
+              $tasklist_sorted = from($tasklist)->orderByDescending('$v->plantask')->thenBy('$v->neverending')->thenBy('$v->latefinish')->thenBy('$v->earlystart')->toArray();
             $this->view('/layouts/layout_header', ['title' => $title]);
             $this->view('home/main', ['title'=>"DailyBoost",'tasks' => $tasklist_sorted, 'category' => $category_id,
                 'category_filter_name' => $category_filter_name,
