@@ -96,7 +96,7 @@ function init()
         {
             addCategoryId = categoryId;
         }
-        alert(addCategoryId);
+
         // if taskid exists, then resumen. If catgory exists, then create a new one
         if(tid!=-1 || addCategoryId != -1)
         {
